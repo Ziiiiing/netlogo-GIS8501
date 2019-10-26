@@ -1,8 +1,16 @@
+globals [cov_score]
+
+breed [majorities majority]
+breed [minorities minority]
+
 ; create some number of white and black turtles
 to setup
   clear-all
   ask patches [set pcolor green]
-  create-turtles 10
+  create-majorities 10
+  create-minorities 2
+  ask majorities [set color white]
+  ask minorities [set color black]
   ask turtles [setxy random-xcor random-ycor]
   reset-ticks
 end
@@ -25,16 +33,39 @@ end
 ; develops a 3x3 set of patch cells around a wandering turtle
 ; this represents the historical process of creating parcels together as a development
 to develop-parcel
+  ; change from undeveloped to developed
   ask (patch-set [neighbors] of turtles [patch-here] of turtles) [
     if pcolor = green [
       set pcolor grey
     ]
   ]
+
   create-covenant
+
 end
 
-; when a parcel is developed, determine if it will have a restricted covenant
+; when a parcel is developed as a result of a majority turtle moving to the area
+; determine if it will have a restricted covenant.  All parcels developed at the same
+; time will have the same designation - either covenented or not.
 to create-covenant
+  ask majorities [
+    set cov_score random 100
+    if pcolor = grey [
+      ifelse cov_rate > cov_score
+        [set pcolor red]
+        [set pcolor blue]
+    ]
+    ask neighbors [if pcolor = grey [
+      ifelse cov_rate > cov_score
+        [set pcolor red]
+        [set pcolor blue]
+      ]
+    ]
+  ]
+
+  ask minorities [if pcolor = grey [set pcolor blue]
+    ask neighbors [if pcolor = grey [set pcolor blue]]
+  ]
 
 end
 @#$#@#$#@
@@ -98,6 +129,21 @@ NIL
 NIL
 NIL
 1
+
+SLIDER
+27
+136
+199
+169
+cov_rate
+cov_rate
+0
+100
+100.0
+1
+1
+NIL
+HORIZONTAL
 
 @#$#@#$#@
 ## WHAT IS IT?

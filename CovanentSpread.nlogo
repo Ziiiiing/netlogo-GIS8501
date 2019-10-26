@@ -89,7 +89,7 @@ BUTTON
 99
 NIL
 go
-NIL
+T
 1
 T
 OBSERVER

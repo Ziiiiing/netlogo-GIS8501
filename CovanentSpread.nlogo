@@ -17,17 +17,9 @@ ask turtles [
     fd 1            ;; forward 1 step
     rt random 359    ;; turn right random amount
   ]
-<<<<<<< HEAD
   develop-parcel
   tick
 end
-=======
-  tick
-end
-
-; turn an undeveloped parcel into a developed one
-to develop-parcel
->>>>>>> b00df29d3bb86855095302c786d16b77fff35de8
 
 ; turn an undeveloped parcel into a developed one
 ; develops a 3x3 set of patch cells around a wandering turtle
@@ -45,7 +37,6 @@ end
 to create-covenant
 
 end
-
 @#$#@#$#@
 GRAPHICS-WINDOW
 210
@@ -98,7 +89,7 @@ BUTTON
 99
 NIL
 go
-T
+NIL
 1
 T
 OBSERVER

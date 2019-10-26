@@ -1,6 +1,7 @@
 ; create some number of white and black turtles
 to setup
   clear-all
+  ask patches [set pcolor green]
   create-turtles 10
   ask turtles [setxy random-xcor random-ycor]
   reset-ticks

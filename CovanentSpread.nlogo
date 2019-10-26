@@ -1,11 +1,36 @@
 ; create some number of white and black turtles
 to setup
+  clear-all
+  ask patches [set pcolor green]
+  create-turtles 10
+  ask turtles [setxy random-xcor random-ycor]
+  reset-ticks
+end
 
+to go
+  move-turtles
 end
 
 ; homeless turtles move randomly until they find a suitable parcel, then stop
 to move-turtles
+ask turtles [
+    fd 1            ;; forward 1 step
+    rt random 359    ;; turn right random amount
+  ]
+  develop-parcel
+  tick
+end
 
+; turn an undeveloped parcel into a developed one
+; develops a 3x3 set of patch cells around a wandering turtle
+; this represents the historical process of creating parcels together as a development
+to develop-parcel
+  ask (patch-set [neighbors] of turtles [patch-here] of turtles) [
+    if pcolor = green [
+      set pcolor grey
+    ]
+  ]
+  create-covenant
 end
 
 ; when a parcel is developed, determine if it will have a restricted covenant
@@ -13,10 +38,6 @@ to create-covenant
 
 end
 
-; turn an undeveloped parcel into a developed one
-to develop-parcel
-
-end
 @#$#@#$#@
 GRAPHICS-WINDOW
 210
@@ -39,11 +60,45 @@ GRAPHICS-WINDOW
 16
 -16
 16
-0
-0
+1
+1
 1
 ticks
 30.0
+
+BUTTON
+24
+61
+87
+94
+NIL
+setup
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+BUTTON
+117
+66
+180
+99
+NIL
+go
+T
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
 
 @#$#@#$#@
 ## WHAT IS IT?

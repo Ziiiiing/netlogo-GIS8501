@@ -12,7 +12,6 @@ globals [
   ;; size of each step, see SYSTEM-DYNAMICS-GO
   dt
   cov_score
-  cov_rate
 
   ; raster dataset of how far to amenities - only modeling non-Mississippi water bodies here
   DistToWater
@@ -136,7 +135,7 @@ end
 ; red patches have restrictive covenants
 ; blue patches have no restrictions
 to create-covenant
-  ask Bs [
+  ask Ws [
     set cov_score random 100
     if pcolor = grey [
       ifelse cov_rate > cov_score
@@ -151,12 +150,11 @@ to create-covenant
     ]
   ]
 
-  ask Ws [if pcolor = grey [set pcolor blue]
+  ask Bs [if pcolor = grey [set pcolor blue]
     ask neighbors [if pcolor = grey [set pcolor blue]]
   ]
 
 end
-
 
 
 
@@ -230,6 +228,21 @@ NIL
 NIL
 NIL
 1
+
+SLIDER
+60
+227
+232
+260
+cov_rate
+cov_rate
+0
+100
+100.0
+1
+1
+NIL
+HORIZONTAL
 
 @#$#@#$#@
 ## WHAT IS IT?

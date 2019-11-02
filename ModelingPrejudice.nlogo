@@ -52,16 +52,18 @@ to setup
   patch-setup
 end
 
+
+; use the raster data from Minneapolis to initialize patch values
 to patch-setup
   set DistToWater gis:load-dataset "DistToWater/disttowater.asc"
-
   gis:set-world-envelope (gis:envelope-of DistToWater)
-
   gis:apply-raster DistToWater waterDistance
 
+  ; b/c the raster represents distance to water in 250m cell increments,
+  ; any cell that has a value less than 250 must be water itself
   ask patches [ifelse waterDistance < 250
-    [set pcolor black]
-    [set pcolor green] ]
+    [set pcolor black]     ; water
+    [set pcolor green] ]   ; land
 
 end
 
@@ -238,7 +240,7 @@ cov_rate
 cov_rate
 0
 100
-100.0
+54.0
 1
 1
 NIL

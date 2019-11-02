@@ -1,4 +1,3 @@
-
 breed [Bs B]
 breed [Ws W]
 
@@ -113,6 +112,9 @@ end
 ; when a parcel is developed as a result of a majority turtle moving to the area
 ; determine if it will have a restricted covenant.  All parcels developed at the same
 ; time will have the same designation - either covenented or not.
+; grey patches represent developed parcels whose covenant status has not been assigned
+; red patches have restrictive covenants
+; blue patches have no restrictions
 to create-covenant
   ask Bs [
     set cov_score random 100
@@ -134,7 +136,6 @@ to create-covenant
   ]
 
 end
-
 
 
 

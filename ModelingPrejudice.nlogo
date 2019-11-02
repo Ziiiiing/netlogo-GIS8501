@@ -1,3 +1,5 @@
+extensions [gis]
+
 breed [Bs B]
 breed [Ws W]
 
@@ -11,7 +13,12 @@ globals [
   dt
   cov_score
   cov_rate
+
+  ; raster dataset of how far to amenities - only modeling non-Mississippi water bodies here
+  DistToWater
 ]
+
+patches-own [waterDistance] ; raster values applied to patches
 
 
 ; define two variables belonging to each turtle
@@ -43,7 +50,20 @@ to setup
   create-Ws 30  [setxy random-xcor random-ycor]
   ask Bs [ set color black ]
   ask Ws [ set color white ]
-  ask patches [set pcolor green]
+  patch-setup
+end
+
+to patch-setup
+  set DistToWater gis:load-dataset "DistToWater/disttowater.asc"
+
+  gis:set-world-envelope (gis:envelope-of DistToWater)
+
+  gis:apply-raster DistToWater waterDistance
+
+  ask patches [ifelse waterDistance < 250
+    [set pcolor black]
+    [set pcolor green] ]
+
 end
 
 ; run the model
@@ -149,16 +169,15 @@ end
 
 
 
-
 @#$#@#$#@
 GRAPHICS-WINDOW
 210
 10
-647
-448
+708
+629
 -1
 -1
-13.0
+10.0
 1
 10
 1
@@ -168,10 +187,10 @@ GRAPHICS-WINDOW
 1
 1
 1
--16
-16
--16
-16
+-24
+24
+-30
+30
 0
 0
 1

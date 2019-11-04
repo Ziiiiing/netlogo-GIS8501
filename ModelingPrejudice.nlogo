@@ -1,3 +1,4 @@
+extensions [gis]
 
 breed [Bs B]
 breed [Ws W]
@@ -11,8 +12,12 @@ globals [
   ;; size of each step, see SYSTEM-DYNAMICS-GO
   dt
   cov_score
-  cov_rate
+
+  ; raster dataset of how far to amenities - only modeling non-Mississippi water bodies here
+  DistToWater
 ]
+
+patches-own [waterDistance] ; raster values applied to patches
 
 
 ; define two variables belonging to each turtle
@@ -44,7 +49,22 @@ to setup
   create-Ws 30  [setxy random-xcor random-ycor]
   ask Bs [ set color black ]
   ask Ws [ set color white ]
-  ask patches [set pcolor green]
+  patch-setup
+end
+
+
+; use the raster data from Minneapolis to initialize patch values
+to patch-setup
+  set DistToWater gis:load-dataset "DistToWater/disttowater.asc"
+  gis:set-world-envelope (gis:envelope-of DistToWater)
+  gis:apply-raster DistToWater waterDistance
+
+  ; b/c the raster represents distance to water in 250m cell increments,
+  ; any cell that has a value less than 250 must be water itself
+  ask patches [ifelse waterDistance < 250
+    [set pcolor black]     ; water
+    [set pcolor green] ]   ; land
+
 end
 
 ; run the model
@@ -113,8 +133,11 @@ end
 ; when a parcel is developed as a result of a majority turtle moving to the area
 ; determine if it will have a restricted covenant.  All parcels developed at the same
 ; time will have the same designation - either covenented or not.
+; grey patches represent developed parcels whose covenant status has not been assigned
+; red patches have restrictive covenants
+; blue patches have no restrictions
 to create-covenant
-  ask Bs [
+  ask Ws [
     set cov_score random 100
     if pcolor = grey [
       ifelse cov_rate > cov_score
@@ -129,7 +152,7 @@ to create-covenant
     ]
   ]
 
-  ask Ws [if pcolor = grey [set pcolor blue]
+  ask Bs [if pcolor = grey [set pcolor blue]
     ask neighbors [if pcolor = grey [set pcolor blue]]
   ]
 
@@ -146,18 +169,15 @@ end
 
 
 
-
-
-
 @#$#@#$#@
 GRAPHICS-WINDOW
 210
 10
-647
-448
+708
+629
 -1
 -1
-13.0
+10.0
 1
 10
 1
@@ -167,10 +187,10 @@ GRAPHICS-WINDOW
 1
 1
 1
--16
-16
--16
-16
+-24
+24
+-30
+30
 0
 0
 1
@@ -210,6 +230,21 @@ NIL
 NIL
 NIL
 1
+
+SLIDER
+60
+227
+232
+260
+cov_rate
+cov_rate
+0
+100
+54.0
+1
+1
+NIL
+HORIZONTAL
 
 @#$#@#$#@
 ## WHAT IS IT?

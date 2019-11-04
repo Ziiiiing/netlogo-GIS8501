@@ -1,15 +1,8 @@
-
 breed [Bs B]
 breed [Ws W]
 
-
-;; System dynamics model globals
 globals [
   ;; constants
-  Bs-birth-rate
-  Ws-birth-rate
-  ;; size of each step, see SYSTEM-DYNAMICS-GO
-  dt
   cov_score
   cov_rate
 ]
@@ -22,44 +15,29 @@ turtles-own [
 ]
 
 
-;; Initializes the system dynamics model.
-;; Call this in your model's SETUP procedure.
-to system-dynamics-setup
-  reset-ticks
-  set dt 0.001
-  ;; initialize constant values
-  set Bs-birth-rate 0.45
-  set Ws-birth-rate 0.26
-  ;; initialize stock values
-end
-
-
-
-
-
 to setup
-  clear-all
   system-dynamics-setup
-  create-Bs 10  [setxy random-xcor random-ycor ]
-  create-Ws 30  [setxy random-xcor random-ycor]
+  clear-all
   ask Bs [ set color black ]
   ask Ws [ set color white ]
   ask patches [set pcolor green]
+  set dt 0.1
 end
 
 ; run the model
 ; all initial turtles are homeless
 to go
   system-dynamics-go
+  system-dynamics-do-plot
   update-turtles
   if all? turtles [home?] [stop]
   move-homeless-turtles
-
-end
-
-;; Call this in your model's GO procedure.
-to system-dynamics-go
   tick-advance dt
+  ask turtles [if color = white
+    [hatch .01 setxy random-ycor random-xcor]]
+  ask turtles [if color = black
+    [hatch .03 setxy random-ycor random-xcor]]
+
 end
 
 
@@ -134,8 +112,6 @@ to create-covenant
   ]
 
 end
-
-
 
 
 
@@ -556,6 +532,36 @@ Polygon -7500403 true true 30 75 75 30 270 225 225 270
 NetLogo 6.1.1
 @#$#@#$#@
 @#$#@#$#@
+1.0
+    org.nlogo.sdm.gui.AggregateDrawing 10
+        org.nlogo.sdm.gui.StockFigure "attributes" "attributes" 1 "FillColor" "Color" 225 225 182 439 105 60 40
+            org.nlogo.sdm.gui.WrappedStock "B" "2646" 0
+        org.nlogo.sdm.gui.StockFigure "attributes" "attributes" 1 "FillColor" "Color" 225 225 182 242 196 60 40
+            org.nlogo.sdm.gui.WrappedStock "W" "330676" 0
+        org.nlogo.sdm.gui.RateConnection 3 230 216 119 216 230 216 NULL NULL 0 0 0
+            org.jhotdraw.standard.ChopBoxConnector REF 3
+            org.jhotdraw.standard.ChopBoxConnector REF 3
+            org.nlogo.sdm.gui.WrappedRate "Ws-birth-rate * Ws" "Ws-births" REF 4 REF 4 0
+        org.nlogo.sdm.gui.ConverterFigure "attributes" "attributes" 1 "FillColor" "Color" 130 188 183 35 154 50 50
+            org.nlogo.sdm.gui.WrappedConverter "0.018308775604" "W-birth-rate"
+        org.nlogo.sdm.gui.BindingConnection 2 78 185 119 216 NULL NULL 0 0 0
+            org.jhotdraw.contrib.ChopDiamondConnector REF 9
+            org.nlogo.sdm.gui.ChopRateConnector REF 5
+        org.nlogo.sdm.gui.ConverterFigure "attributes" "attributes" 1 "FillColor" "Color" 130 188 183 34 20 50 50
+            org.nlogo.sdm.gui.WrappedConverter "0.030278775006" "B-birth-rate"
+        org.nlogo.sdm.gui.RateConnection 3 427 124 297 124 427 124 NULL NULL 0 0 0
+            org.jhotdraw.standard.ChopBoxConnector REF 1
+            org.jhotdraw.standard.ChopBoxConnector REF 1
+            org.nlogo.sdm.gui.WrappedRate "Bs-birth-rate * Bs" "Bs-births" REF 2 REF 2 0
+        org.nlogo.sdm.gui.BindingConnection 2 230 216 119 216 NULL NULL 0 0 0
+            org.jhotdraw.standard.ChopBoxConnector REF 3
+            org.nlogo.sdm.gui.ChopRateConnector REF 5
+        org.nlogo.sdm.gui.BindingConnection 2 78 50 297 124 NULL NULL 0 0 0
+            org.jhotdraw.contrib.ChopDiamondConnector REF 14
+            org.nlogo.sdm.gui.ChopRateConnector REF 16
+        org.nlogo.sdm.gui.BindingConnection 2 427 124 297 124 NULL NULL 0 0 0
+            org.jhotdraw.standard.ChopBoxConnector REF 1
+            org.nlogo.sdm.gui.ChopRateConnector REF 16
 @#$#@#$#@
 @#$#@#$#@
 @#$#@#$#@

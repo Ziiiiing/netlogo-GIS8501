@@ -74,7 +74,8 @@ to go
   system-dynamics-go
   update-turtles
   move-homeless-turtles
-  ;if all? turtles [home?] [stop]  ; commented out for testing
+  ; comment out line below to test continued movement
+  if all? turtles [home?] [stop]
 
 
 end
@@ -93,7 +94,8 @@ end
 
 ; homeless turtles try a new spot
 to move-homeless-turtles
-  ask turtles ;with [not home?]  ; commented out for testing
+  ; comment out the part of the line below after turtles to test continued movement
+  ask turtles with [not home?]
   [find-new-spot]
    develop-parcel
   tick
@@ -113,7 +115,8 @@ end
 to update-turtles
   ask turtles [
     set other-nearby-2 count (turtles in-radius 2) with [color != [color] of myself]
-    ;set home? other-nearby-2 = (0) ; commented out for testing
+    ; comment out line below to test continued movement
+    set home? other-nearby-2 = (0)
   ]
 end
 
@@ -165,7 +168,6 @@ to create-covenant
   ]
 
 end
-
 
 
 

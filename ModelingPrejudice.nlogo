@@ -17,7 +17,8 @@ globals [
   DistToWater
 ]
 
-patches-own [waterDistance] ; raster values applied to patches
+patches-own [waterDistance
+             covMultiplier] ; raster values applied to patches
 
 
 ; define two variables belonging to each turtle
@@ -138,8 +139,12 @@ end
 ; red patches have restrictive covenants
 ; blue patches have no restrictions
 to create-covenant
+  ask patches [carefully
+    [set covMultiplier (waterDistance / gis:maximum-of DistToWater)]
+    [set covMultiplier 0]
+  ]
   ask Ws [
-    set cov_score random 100
+    set cov_score random 50 + random 50 * covMultiplier ; half the score is baked in, half is modified by the covMultiplier
     if pcolor = grey [
       ifelse cov_rate > cov_score
         [set pcolor red]
@@ -158,7 +163,6 @@ to create-covenant
   ]
 
 end
-
 
 
 
@@ -240,7 +244,7 @@ cov_rate
 cov_rate
 0
 100
-100.0
+50.0
 1
 1
 NIL

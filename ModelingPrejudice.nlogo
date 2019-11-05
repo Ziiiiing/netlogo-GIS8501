@@ -72,8 +72,9 @@ end
 to go
   system-dynamics-go
   update-turtles
-  if all? turtles [home?] [stop]
   move-homeless-turtles
+  if all? turtles [home?] [stop]
+
 
 end
 
@@ -168,7 +169,6 @@ end
 
 
 
-
 @#$#@#$#@
 GRAPHICS-WINDOW
 210
@@ -240,7 +240,7 @@ cov_rate
 cov_rate
 0
 100
-54.0
+100.0
 1
 1
 NIL

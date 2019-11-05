@@ -74,7 +74,7 @@ to go
   system-dynamics-go
   update-turtles
   move-homeless-turtles
-  if all? turtles [home?] [stop]
+  ;if all? turtles [home?] [stop]  ; commented out for testing
 
 
 end
@@ -93,7 +93,7 @@ end
 
 ; homeless turtles try a new spot
 to move-homeless-turtles
-  ask turtles with [not home?]
+  ask turtles ;with [not home?]  ; commented out for testing
   [find-new-spot]
    develop-parcel
   tick
@@ -101,9 +101,11 @@ end
 
 ; move until the homeless turtles find an unoccupied patch
 to find-new-spot
-  rt random-float 360
-  fd 1
-  ; give them random headings
+  rt random-float 360 ; give them random headings
+  ifelse [pcolor] of patch-ahead 1 = black
+  [ lt random-float 360 ]   ;; turtle sees a water patch in front of it. Turn a random amount.
+  [ fd 1 ]                  ;; Otherwise, it is safe to move forward.
+
   if any? other turtles-here [find-new-spot]    ; make sure the new places thet found are unoccupied patches
   move-to patch-here                            ; move to center of unoccupied patch
 end
@@ -111,7 +113,7 @@ end
 to update-turtles
   ask turtles [
     set other-nearby-2 count (turtles in-radius 2) with [color != [color] of myself]
-    set home? other-nearby-2 = (0)
+    ;set home? other-nearby-2 = (0) ; commented out for testing
   ]
 end
 
@@ -163,7 +165,6 @@ to create-covenant
   ]
 
 end
-
 
 
 

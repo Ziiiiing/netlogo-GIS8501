@@ -68,8 +68,8 @@ end
 ; they are not allowed to overlap
 ; they are not allowed to be set in water
 to turtle-setup
-  ask n-of 30 patches with [pcolor != black and not any? other turtles-here] [sprout-Bs 1 [set color white]]
-  ask n-of 10 patches with [pcolor != black and not any? other turtles-here] [sprout-Ws 1 [set color black]]
+  ask n-of 30 patches with [pcolor != black and not any? other turtles-here] [sprout-Ws 1 [set color white]]
+  ask n-of 10 patches with [pcolor != black and not any? other turtles-here] [sprout-Bs 1 [set color black]]
 end
 
 ; run the model
@@ -169,7 +169,6 @@ to create-covenant
   ]
 
 end
-
 
 
 

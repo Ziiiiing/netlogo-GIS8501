@@ -4,21 +4,18 @@ breed [Bs B]
 breed [Ws W]
 
 
-;; System dynamics model globals
 globals [
-  ;; constants
-  Bs-birth-rate
-  Ws-birth-rate
-  ;; size of each step, see SYSTEM-DYNAMICS-GO
   dt
   cov_score
-
   ; raster dataset of how far to amenities - only modeling non-Mississippi water bodies here
   DistToWater
 ]
 
+
+
 patches-own [waterDistance
              covMultiplier] ; raster values applied to patches
+
 
 
 ; define two variables belonging to each turtle
@@ -28,31 +25,36 @@ turtles-own [
 ]
 
 
-;; Initializes the system dynamics model.
-;; Call this in your model's SETUP procedure.
-to system-dynamics-setup
-  reset-ticks
-  set dt 0.001
-  ;; initialize constant values
-  set Bs-birth-rate 0.45
-  set Ws-birth-rate 0.26
-  ;; initialize stock values
-end
 
-
-
-
-
+;set up model to run
+;initial setup creates x number of turtles of each color
 to setup
   clear-all
-  system-dynamics-setup
-  create-Bs 10  [setxy random-xcor random-ycor ]
-  create-Ws 30  [setxy random-xcor random-ycor]
-  ask Bs [ set color black ]
-  ask Ws [ set color white ]
+  make-turtles 3
   patch-setup
+  reset-ticks
 end
 
+
+
+;creates turtles at given #, 10X more white turtles are created than black turtles
+to make-turtles [ num ]
+  create-Bs num
+  [ setxy random-xcor random-ycor
+    set color black
+  ]
+
+  create-Ws num * 10
+  [ setxy random-xcor random-ycor
+    set color white
+  ]
+end
+
+
+; used in go procuedre, turtles are created at the end of each tick
+to increase-turtles
+  make-turtles 1
+end
 
 ; use the raster data from Minneapolis to initialize patch values
 to patch-setup
@@ -68,27 +70,20 @@ to patch-setup
 
 end
 
+
+
+
 ; run the model
 ; all initial turtles are homeless
 to go
-  system-dynamics-go
+  if ticks >= 130 [ stop ]
   update-turtles
+  increase-turtles
   move-homeless-turtles
   if all? turtles [home?] [stop]
-
-
+  tick
 end
 
-;; Call this in your model's GO procedure.
-to system-dynamics-go
-  tick-advance dt
-end
-
-
-
-
-; run the model
-; all initial turtles are homeless
 
 
 ; homeless turtles try a new spot
@@ -163,7 +158,6 @@ to create-covenant
   ]
 
 end
-
 
 
 

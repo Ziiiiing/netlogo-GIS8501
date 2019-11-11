@@ -41,16 +41,11 @@ end
 
 
 
-
-
 to setup
   clear-all
   system-dynamics-setup
-  create-Bs 10  [setxy random-xcor random-ycor ]
-  create-Ws 30  [setxy random-xcor random-ycor]
-  ask Bs [ set color black ]
-  ask Ws [ set color white ]
   patch-setup
+  turtle-setup
 end
 
 
@@ -66,6 +61,15 @@ to patch-setup
     [set pcolor black]     ; water
     [set pcolor green] ]   ; land
 
+end
+
+
+; create turtles
+; they are not allowed to overlap
+; they are not allowed to be set in water
+to turtle-setup
+  ask n-of 30 patches with [pcolor != black and not any? other turtles-here] [sprout-Bs 1 [set color white]]
+  ask n-of 10 patches with [pcolor != black and not any? other turtles-here] [sprout-Ws 1 [set color black]]
 end
 
 ; run the model
@@ -103,8 +107,10 @@ end
 to find-new-spot
   rt random-float 360
   fd 1
-  ; give them random headings
-  if any? other turtles-here [find-new-spot]    ; make sure the new places thet found are unoccupied patches
+  if any? other turtles-here [find-new-spot]        ; check whether the new places they found are unoccupied
+  if pcolor = red [find-new-spot]                   ; check whether the new places they found have not restrictive covenants
+  if pcolor = black [find-new-spot]                 ; check whether the new places they found are not water
+
   move-to patch-here                            ; move to center of unoccupied patch
 end
 
@@ -163,7 +169,6 @@ to create-covenant
   ]
 
 end
-
 
 
 

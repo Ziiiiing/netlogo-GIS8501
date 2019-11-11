@@ -62,6 +62,18 @@ to patch-setup
     [set pcolor black]     ; water
     [set pcolor green] ]   ; land
 
+  ; define area of initial development
+  ask patches with [
+    pxcor > 14 and
+    pxcor < 34 and
+    pycor > 20 and
+    pycor < 40
+  ]
+
+
+  ; develop the initial area without restrictive covenants
+  [set pcolor blue]
+
 end
 
 
@@ -69,8 +81,8 @@ end
 ; they are not allowed to overlap
 ; they are not allowed to be set in water
 to turtle-setup
-  ask n-of 30 patches with [pcolor != black and not any? other turtles-here] [sprout-Ws 1 [set color white set home? FALSE]]
-  ask n-of 10 patches with [pcolor != black and not any? other turtles-here] [sprout-Bs 1 [set color black set home? FALSE]]
+  ask n-of 30 patches with [pcolor = blue and not any? other turtles-here] [sprout-Ws 1 [set color white set home? FALSE]]
+  ask n-of 10 patches with [pcolor = blue and not any? other turtles-here] [sprout-Bs 1 [set color black set home? FALSE]]
 end
 
 ; run the model
@@ -172,7 +184,6 @@ to create-covenant
   ]
 
 end
-
 
 
 

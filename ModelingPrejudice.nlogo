@@ -46,6 +46,7 @@ to setup
   system-dynamics-setup
   patch-setup
   turtle-setup
+  create-Ws 1 [setxy 6 4 set color white set home? FALSE]
 end
 
 
@@ -68,8 +69,8 @@ end
 ; they are not allowed to overlap
 ; they are not allowed to be set in water
 to turtle-setup
-  ask n-of 30 patches with [pcolor != black and not any? other turtles-here] [sprout-Ws 1 [set color white]]
-  ask n-of 10 patches with [pcolor != black and not any? other turtles-here] [sprout-Bs 1 [set color black]]
+  ask n-of 30 patches with [pcolor != black and not any? other turtles-here] [sprout-Ws 1 [set color white set home? FALSE]]
+  ask n-of 10 patches with [pcolor != black and not any? other turtles-here] [sprout-Bs 1 [set color black set home? FALSE]]
 end
 
 ; run the model
@@ -78,7 +79,7 @@ to go
   system-dynamics-go
   update-turtles
   move-homeless-turtles
-  if all? turtles [home?] [stop]
+  if count turtles with [home? = FALSE] = 0 [stop]
 
 
 end
@@ -97,7 +98,7 @@ end
 
 ; homeless turtles try a new spot
 to move-homeless-turtles
-  ask turtles with [not home?]
+  ask turtles with [home? = FALSE]
   [find-new-spot]
    develop-parcel
   tick
@@ -109,7 +110,7 @@ to find-new-spot
   fd 1
   if any? other turtles-here [find-new-spot]        ; check whether the new places they found are unoccupied
   if pcolor = red [find-new-spot]                   ; check whether the new places they found have not restrictive covenants
-  if pcolor = black [find-new-spot]                 ; check whether the new places they found are not water
+  if pcolor = black [ print 0 find-new-spot]                 ; check whether the new places they found are not water
 
   move-to patch-here                            ; move to center of unoccupied patch
 end
@@ -117,8 +118,10 @@ end
 to update-turtles
   ask turtles [
     set other-nearby-2 count (turtles in-radius 2) with [color != [color] of myself]
-    set home? other-nearby-2 = (0)
-  ]
+    if other-nearby-2 = 0 [
+      if pcolor != black [
+      set home? TRUE]
+  ]]
 end
 
 
@@ -176,7 +179,6 @@ end
 
 
 
-
 @#$#@#$#@
 GRAPHICS-WINDOW
 210
@@ -195,10 +197,10 @@ GRAPHICS-WINDOW
 1
 1
 1
--24
-24
--30
-30
+0
+48
+0
+60
 0
 0
 1

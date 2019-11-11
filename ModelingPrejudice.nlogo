@@ -4,13 +4,8 @@ breed [Bs B]
 breed [Ws W]
 
 
-;; System dynamics model globals
 globals [
-  ;; constants
-  Bs-birth-rate
-  Ws-birth-rate
-  ;; size of each step, see SYSTEM-DYNAMICS-GO
-  dt
+
   cov_score
 
   ; raster dataset of how far to amenities - only modeling non-Mississippi water bodies here
@@ -27,24 +22,10 @@ turtles-own [
 ]
 
 
-;; Initializes the system dynamics model.
-;; Call this in your model's SETUP procedure.
-to system-dynamics-setup
-  reset-ticks
-  set dt 0.001
-  ;; initialize constant values
-  set Bs-birth-rate 0.45
-  set Ws-birth-rate 0.26
-  ;; initialize stock values
-end
-
-
-
 
 
 to setup
   clear-all
-  system-dynamics-setup
   create-Bs 10  [setxy random-xcor random-ycor ]
   create-Ws 30  [setxy random-xcor random-ycor]
   ask Bs [ set color black ]
@@ -70,17 +51,13 @@ end
 ; run the model
 ; all initial turtles are homeless
 to go
-  system-dynamics-go
+  RESET-TICKS
   update-turtles
   move-homeless-turtles
-  if all? turtles [home?] [stop]
-
-
-end
-
-;; Call this in your model's GO procedure.
-to system-dynamics-go
-  tick-advance dt
+  ask turtles[
+    reproduce
+  ]
+  tick
 end
 
 
@@ -88,7 +65,15 @@ end
 
 ; run the model
 ; all initial turtles are homeless
+to reproduce
+  if color = white [
+    hatch 1 [ setxy random-xcor random-ycor ]
+  ]
+  if color = black [
+    hatch 1 [ setxy random-xcor random-ycor ]
+  ]
 
+end
 
 ; homeless turtles try a new spot
 to move-homeless-turtles
@@ -96,6 +81,7 @@ to move-homeless-turtles
   [find-new-spot]
    develop-parcel
   tick
+  if all? turtles [home?] [stop]
 end
 
 ; move until the homeless turtles find an unoccupied patch
@@ -240,7 +226,7 @@ cov_rate
 cov_rate
 0
 100
-100.0
+50.0
 1
 1
 NIL

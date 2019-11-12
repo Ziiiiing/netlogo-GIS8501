@@ -15,6 +15,8 @@ globals [
 
   ; raster dataset of how far to amenities - only modeling non-Mississippi water bodies here
   DistToWater
+
+  export_raster ; output raster of patch color value
 ]
 
 patches-own [waterDistance
@@ -91,7 +93,9 @@ to go
   system-dynamics-go
   update-turtles
   move-homeless-turtles
-  if count turtles with [home? = FALSE] = 0 [stop]
+  if count turtles with [home? = FALSE] = 0 [
+    output-raster
+    stop]
 
 
 end
@@ -101,7 +105,12 @@ to system-dynamics-go
   tick-advance dt
 end
 
-
+to output-raster
+  ask patches [
+    set export_raster gis:patch-dataset pcolor
+  ]
+  gis:store-dataset export_raster "ABM_Output"
+end
 
 
 ; run the model
@@ -122,7 +131,7 @@ to find-new-spot
   fd 1
   if any? other turtles-here [find-new-spot]        ; check whether the new places they found are unoccupied
   if pcolor = red [find-new-spot]                   ; check whether the new places they found have not restrictive covenants
-  if pcolor = black [ print 0 find-new-spot]                 ; check whether the new places they found are not water
+  if pcolor = black [ find-new-spot]                 ; check whether the new places they found are not water
 
   move-to patch-here                            ; move to center of unoccupied patch
 end
@@ -184,7 +193,6 @@ to create-covenant
   ]
 
 end
-
 
 
 

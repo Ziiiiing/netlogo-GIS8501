@@ -4,15 +4,9 @@ breed [Bs B]
 breed [Ws W]
 
 
-;; System dynamics model globals
-globals [
-  ;; constants
-  Bs-birth-rate
-  Ws-birth-rate
-  ;; size of each step, see SYSTEM-DYNAMICS-GO
-  dt
-  cov_score
 
+globals [
+  cov_score
   ; raster dataset of how far to amenities - only modeling non-Mississippi water bodies here
   DistToWater
 ]
@@ -28,22 +22,9 @@ turtles-own [
 ]
 
 
-;; Initializes the system dynamics model.
-;; Call this in your model's SETUP procedure.
-to system-dynamics-setup
-  reset-ticks
-  set dt 0.001
-  ;; initialize constant values
-  set Bs-birth-rate 0.45
-  set Ws-birth-rate 0.26
-  ;; initialize stock values
-end
-
-
-
 to setup
   clear-all
-  system-dynamics-setup
+  reset-ticks
   patch-setup
   turtle-setup
   create-Ws 1 [setxy 6 4 set color white set home? FALSE]
@@ -85,27 +66,30 @@ to turtle-setup
   ask n-of 10 patches with [pcolor = blue and not any? other turtles-here] [sprout-Bs 1 [set color black set home? FALSE]]
 end
 
+
+to reproduce-Ws  ; white agent procedure
+  if random-float 100 < 18.3 [  ; throw "dice" to see if you will reproduce
+    hatch 1 [ rt random-float 360 fd 1 ]   ; hatch an offspring and move it forward 1 step
+  ]
+end
+
+to reproduce-Bs  ; black agent procedure
+  if random-float 100 < 30.2 [  ; throw "dice" to see if you will reproduce
+    hatch 1 [ rt random-float 360 fd 1 ]  ; hatch an offspring and move it forward 1 step
+  ]
+end
+
+
 ; run the model
 ; all initial turtles are homeless
 to go
-  system-dynamics-go
   update-turtles
   move-homeless-turtles
   if count turtles with [home? = FALSE] = 0 [stop]
-
-
+  ask Ws [ reproduce-Ws ]
+  ask Bs [ reproduce-Bs ]
+  tick
 end
-
-;; Call this in your model's GO procedure.
-to system-dynamics-go
-  tick-advance dt
-end
-
-
-
-
-; run the model
-; all initial turtles are homeless
 
 
 ; homeless turtles try a new spot
@@ -113,7 +97,6 @@ to move-homeless-turtles
   ask turtles with [home? = FALSE]
   [find-new-spot]
    develop-parcel
-  tick
 end
 
 ; move until the homeless turtles find an unoccupied patch
@@ -184,7 +167,6 @@ to create-covenant
   ]
 
 end
-
 
 
 

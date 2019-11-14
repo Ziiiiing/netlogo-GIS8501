@@ -137,12 +137,20 @@ to find-new-spot
 end
 
 to update-turtles
-  ask turtles [
+  ask Ws [
     set other-nearby-2 count (turtles in-radius 2) with [color != [color] of myself]
     if other-nearby-2 = 0 [
       if pcolor != black [
       set home? TRUE]
   ]]
+
+   ask Bs [
+    set other-nearby-2 count (turtles in-radius 2) with [color != [color] of myself]
+    if other-nearby-2 = 0 [
+      if pcolor != black [
+        if pcolor != red [                          ; besides, black turtles cannot set home on red patches
+      set home? TRUE]
+  ]]]
 end
 
 
@@ -269,7 +277,7 @@ cov_rate
 cov_rate
 0
 100
-50.0
+100.0
 1
 1
 NIL

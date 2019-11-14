@@ -15,6 +15,8 @@ globals [
 
   ; raster dataset of how far to amenities - only modeling non-Mississippi water bodies here
   DistToWater
+
+  export_raster ; output raster of patch color value
 ]
 
 patches-own [waterDistance
@@ -62,6 +64,18 @@ to patch-setup
     [set pcolor black]     ; water
     [set pcolor green] ]   ; land
 
+  ; define area of initial development
+  ask patches with [
+    pxcor > 14 and
+    pxcor < 34 and
+    pycor > 20 and
+    pycor < 40
+  ]
+
+
+  ; develop the initial area without restrictive covenants
+  [set pcolor blue]
+
 end
 
 
@@ -69,8 +83,8 @@ end
 ; they are not allowed to overlap
 ; they are not allowed to be set in water
 to turtle-setup
-  ask n-of 30 patches with [pcolor != black and not any? other turtles-here] [sprout-Ws 1 [set color white set home? FALSE]]
-  ask n-of 10 patches with [pcolor != black and not any? other turtles-here] [sprout-Bs 1 [set color black set home? FALSE]]
+  ask n-of 30 patches with [pcolor = blue and not any? other turtles-here] [sprout-Ws 1 [set color white set home? FALSE]]
+  ask n-of 10 patches with [pcolor = blue and not any? other turtles-here] [sprout-Bs 1 [set color black set home? FALSE]]
 end
 
 ; run the model
@@ -79,7 +93,9 @@ to go
   system-dynamics-go
   update-turtles
   move-homeless-turtles
-  if count turtles with [home? = FALSE] = 0 [stop]
+  if count turtles with [home? = FALSE] = 0 [
+    output-raster
+    stop]
 
 
 end
@@ -89,7 +105,12 @@ to system-dynamics-go
   tick-advance dt
 end
 
-
+to output-raster
+  ask patches [
+    set export_raster gis:patch-dataset pcolor
+  ]
+  gis:store-dataset export_raster "ABM_Output"
+end
 
 
 ; run the model
@@ -110,18 +131,26 @@ to find-new-spot
   fd 1
   if any? other turtles-here [find-new-spot]        ; check whether the new places they found are unoccupied
   if pcolor = red [find-new-spot]                   ; check whether the new places they found have not restrictive covenants
-  if pcolor = black [ print 0 find-new-spot]                 ; check whether the new places they found are not water
+  if pcolor = black [ find-new-spot]                 ; check whether the new places they found are not water
 
   move-to patch-here                            ; move to center of unoccupied patch
 end
 
 to update-turtles
-  ask turtles [
+  ask Ws [
     set other-nearby-2 count (turtles in-radius 2) with [color != [color] of myself]
     if other-nearby-2 = 0 [
       if pcolor != black [
       set home? TRUE]
   ]]
+
+   ask Bs [
+    set other-nearby-2 count (turtles in-radius 2) with [color != [color] of myself]
+    if other-nearby-2 = 0 [
+      if pcolor != black [
+        if pcolor != red [                          ; besides, black turtles cannot set home on red patches
+      set home? TRUE]
+  ]]]
 end
 
 
@@ -172,9 +201,6 @@ to create-covenant
   ]
 
 end
-
-
-
 
 
 
@@ -250,7 +276,7 @@ cov_rate
 cov_rate
 0
 100
-50.0
+100.0
 1
 1
 NIL

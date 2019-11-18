@@ -9,6 +9,8 @@ globals [
   cov_score
   ; raster dataset of how far to amenities - only modeling non-Mississippi water bodies here
   DistToWater
+
+  export_raster ; output raster of patch color value
 ]
 
 patches-own [waterDistance
@@ -67,6 +69,20 @@ to turtle-setup
 end
 
 
+; run the model
+; all initial turtles are homeless
+to go
+  system-dynamics-go
+  update-turtles
+  move-homeless-turtles
+  if count turtles with [home? = FALSE] = 0 [
+    output-raster
+    stop]
+  ask Ws [ reproduce-Ws ]
+  ask Bs [ reproduce-Bs ]
+  tick
+
+
 to reproduce-Ws  ; white agent procedure
   if random-float 100 < 18.3 [  ; throw "dice" to see if you will reproduce
     hatch 1 [ rt random-float 360 fd 1 ]   ; hatch an offspring and move it forward 1 step
@@ -79,17 +95,13 @@ to reproduce-Bs  ; black agent procedure
   ]
 end
 
-
-; run the model
-; all initial turtles are homeless
-to go
-  update-turtles
-  move-homeless-turtles
-  if count turtles with [home? = FALSE] = 0 [stop]
-  ask Ws [ reproduce-Ws ]
-  ask Bs [ reproduce-Bs ]
-  tick
+to output-raster
+  ask patches [
+    set export_raster gis:patch-dataset pcolor
+  ]
+  gis:store-dataset export_raster "ABM_Output"
 end
+
 
 
 ; homeless turtles try a new spot
@@ -105,18 +117,26 @@ to find-new-spot
   fd 1
   if any? other turtles-here [find-new-spot]        ; check whether the new places they found are unoccupied
   if pcolor = red [find-new-spot]                   ; check whether the new places they found have not restrictive covenants
-  if pcolor = black [ print 0 find-new-spot]                 ; check whether the new places they found are not water
+  if pcolor = black [ find-new-spot]                 ; check whether the new places they found are not water
 
   move-to patch-here                            ; move to center of unoccupied patch
 end
 
 to update-turtles
-  ask turtles [
+  ask Ws [
     set other-nearby-2 count (turtles in-radius 2) with [color != [color] of myself]
     if other-nearby-2 = 0 [
       if pcolor != black [
       set home? TRUE]
   ]]
+
+   ask Bs [
+    set other-nearby-2 count (turtles in-radius 2) with [color != [color] of myself]
+    if other-nearby-2 = 0 [
+      if pcolor != black [
+        if pcolor != red [                          ; besides, black turtles cannot set home on red patches
+      set home? TRUE]
+  ]]]
 end
 
 
@@ -243,7 +263,7 @@ cov_rate
 cov_rate
 0
 100
-50.0
+100.0
 1
 1
 NIL

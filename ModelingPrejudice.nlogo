@@ -115,7 +115,7 @@ to find-new-spot
   rt random-float 360
   fd 1
   if any? other turtles-here [find-new-spot]        ; check whether the new places they found are unoccupied
-
+  if pcolor = black [find-new-spot]
   move-to patch-here                            ; move to center of unoccupied patch
 end
 
@@ -128,8 +128,9 @@ to update-turtles
   ]]
 
    ask Bs [
-    set other-nearby-2 count (turtles in-radius 2) with [color != [color] of myself]
-    if other-nearby-2 = 0 and not any? other turtles-here [
+    ;set other-nearby-2 count (turtles in-radius 2) with [color != [color] of myself]
+    ;if other-nearby-2 = 0 and
+    if not any? other turtles-here [
       if pcolor != black [
         if pcolor != red [                          ; besides, black turtles cannot set home on red patches
       set home? TRUE]
@@ -187,7 +188,6 @@ end
 
 
 
-
 @#$#@#$#@
 GRAPHICS-WINDOW
 210
@@ -240,7 +240,7 @@ BUTTON
 156
 NIL
 go
-T
+NIL
 1
 T
 OBSERVER
@@ -259,7 +259,7 @@ cov_rate
 cov_rate
 0
 100
-100.0
+52.0
 1
 1
 NIL

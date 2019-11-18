@@ -4,15 +4,9 @@ breed [Bs B]
 breed [Ws W]
 
 
-;; System dynamics model globals
-globals [
-  ;; constants
-  Bs-birth-rate
-  Ws-birth-rate
-  ;; size of each step, see SYSTEM-DYNAMICS-GO
-  dt
-  cov_score
 
+globals [
+  cov_score
   ; raster dataset of how far to amenities - only modeling non-Mississippi water bodies here
   DistToWater
 
@@ -30,22 +24,9 @@ turtles-own [
 ]
 
 
-;; Initializes the system dynamics model.
-;; Call this in your model's SETUP procedure.
-to system-dynamics-setup
-  reset-ticks
-  set dt 0.001
-  ;; initialize constant values
-  set Bs-birth-rate 0.45
-  set Ws-birth-rate 0.26
-  ;; initialize stock values
-end
-
-
-
 to setup
   clear-all
-  system-dynamics-setup
+  reset-ticks
   patch-setup
   turtle-setup
   create-Ws 1 [setxy 6 4 set color white set home? FALSE]
@@ -83,26 +64,34 @@ end
 ; they are not allowed to overlap
 ; they are not allowed to be set in water
 to turtle-setup
-  ask n-of 30 patches with [pcolor = blue and not any? other turtles-here] [sprout-Ws 1 [set color white set home? FALSE]]
-  ask n-of 10 patches with [pcolor = blue and not any? other turtles-here] [sprout-Bs 1 [set color black set home? FALSE]]
+  ask n-of 352 patches with [pcolor = blue and not any? other turtles-here] [sprout-Ws 1 [set color white set home? FALSE]]
+  ask n-of 9 patches with [pcolor = blue and not any? other turtles-here] [sprout-Bs 1 [set color black set home? FALSE]]
 end
+
 
 ; run the model
 ; all initial turtles are homeless
 to go
-  system-dynamics-go
   update-turtles
   move-homeless-turtles
   if count turtles with [home? = FALSE] = 0 [
     output-raster
     stop]
-
-
+  ask Ws [ reproduce-Ws ]
+  ask Bs [ reproduce-Bs ]
+  tick
 end
 
-;; Call this in your model's GO procedure.
-to system-dynamics-go
-  tick-advance dt
+to reproduce-Ws  ; white agent procedure
+  if random 10000 < 183 [  ; throw "dice" to see if you will reproduce
+    hatch 1 [ set home? False rt random-float 360 fd 1 ]   ; hatch an offspring and move it forward 1 step
+  ]
+end
+
+to reproduce-Bs  ; black agent procedure
+  if random 10000 < 302 [  ; throw "dice" to see if you will reproduce
+    hatch 1 [ set home? False rt random-float 360 fd 1 ]  ; hatch an offspring and move it forward 1 step
+  ]
 end
 
 to output-raster
@@ -113,16 +102,12 @@ to output-raster
 end
 
 
-; run the model
-; all initial turtles are homeless
-
 
 ; homeless turtles try a new spot
 to move-homeless-turtles
   ask turtles with [home? = FALSE]
   [find-new-spot]
    develop-parcel
-  tick
 end
 
 ; move until the homeless turtles find an unoccupied patch
@@ -130,8 +115,6 @@ to find-new-spot
   rt random-float 360
   fd 1
   if any? other turtles-here [find-new-spot]        ; check whether the new places they found are unoccupied
-  if pcolor = red [find-new-spot]                   ; check whether the new places they found have not restrictive covenants
-  if pcolor = black [ find-new-spot]                 ; check whether the new places they found are not water
 
   move-to patch-here                            ; move to center of unoccupied patch
 end
@@ -139,14 +122,14 @@ end
 to update-turtles
   ask Ws [
     set other-nearby-2 count (turtles in-radius 2) with [color != [color] of myself]
-    if other-nearby-2 = 0 [
+    if other-nearby-2 = 0 and not any? other turtles-here [
       if pcolor != black [
       set home? TRUE]
   ]]
 
    ask Bs [
     set other-nearby-2 count (turtles in-radius 2) with [color != [color] of myself]
-    if other-nearby-2 = 0 [
+    if other-nearby-2 = 0 and not any? other turtles-here [
       if pcolor != black [
         if pcolor != red [                          ; besides, black turtles cannot set home on red patches
       set home? TRUE]
@@ -201,7 +184,6 @@ to create-covenant
   ]
 
 end
-
 
 
 
@@ -282,6 +264,39 @@ cov_rate
 1
 NIL
 HORIZONTAL
+
+MONITOR
+62
+306
+132
+351
+NIL
+count Ws
+17
+1
+11
+
+MONITOR
+80
+396
+146
+441
+NIL
+count Bs
+17
+1
+11
+
+MONITOR
+13
+474
+214
+519
+NIL
+count Ws with [home? = TRUE]
+17
+1
+11
 
 @#$#@#$#@
 ## WHAT IS IT?

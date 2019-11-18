@@ -14,7 +14,8 @@ globals [
 ]
 
 patches-own [waterDistance
-             covMultiplier] ; raster values applied to patches
+             covMultiplier
+             restrictive-covenant] ; raster values applied to patches
 
 
 ; define two variables belonging to each turtle
@@ -74,7 +75,7 @@ end
 to go
   update-turtles
   move-homeless-turtles
-  if count turtles with [home? = FALSE] = 0 [
+  if count turtles with [home? = FALSE] = 0 or ticks = 50 [
     output-raster
     stop]
   ask Ws [ reproduce-Ws ]
@@ -84,19 +85,22 @@ end
 
 to reproduce-Ws  ; white agent procedure
   if random 10000 < 183 [  ; throw "dice" to see if you will reproduce
-    hatch 1 [ set home? False rt random-float 360 fd 1 ]   ; hatch an offspring and move it forward 1 step
+    hatch 1 [ set home? False rt random-float 360 fd 6 ]   ; hatch an offspring and move it forward 1 step
   ]
 end
 
 to reproduce-Bs  ; black agent procedure
   if random 10000 < 302 [  ; throw "dice" to see if you will reproduce
-    hatch 1 [ set home? False rt random-float 360 fd 1 ]  ; hatch an offspring and move it forward 1 step
+    hatch 1 [ set home? False rt random-float 360 fd 6 ]  ; hatch an offspring and move it forward 1 step
   ]
 end
 
 to output-raster
-  ask patches [
-    set export_raster gis:patch-dataset pcolor
+  ask patches [set restrictive-covenant 0]
+  ask patches with [pcolor = red]
+    [set restrictive-covenant 1]
+  ask patches  [
+    set export_raster gis:patch-dataset restrictive-covenant
   ]
   gis:store-dataset export_raster "ABM_Output"
 end
@@ -113,7 +117,7 @@ end
 ; move until the homeless turtles find an unoccupied patch
 to find-new-spot
   rt random-float 360
-  fd 1
+  fd 6
   if any? other turtles-here [find-new-spot]        ; check whether the new places they found are unoccupied
   if pcolor = black [find-new-spot]
   move-to patch-here                            ; move to center of unoccupied patch
@@ -121,7 +125,7 @@ end
 
 to update-turtles
   ask Ws [
-    set other-nearby-2 count (turtles in-radius 2) with [color != [color] of myself]
+    set other-nearby-2 count (turtles in-radius 1) with [color != [color] of myself]
     if other-nearby-2 = 0 and not any? other turtles-here [
       if pcolor != black [
       set home? TRUE]
@@ -210,8 +214,8 @@ GRAPHICS-WINDOW
 48
 0
 60
-0
-0
+1
+1
 1
 ticks
 30.0
@@ -240,7 +244,7 @@ BUTTON
 156
 NIL
 go
-NIL
+T
 1
 T
 OBSERVER

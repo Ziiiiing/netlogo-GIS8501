@@ -30,16 +30,18 @@ turtles-own [
 
 to setup
   clear-all
-  reset-ticks
+  ;reset-ticks
   set loop-count 1
-  patch-setup
-  turtle-setup
-  create-Ws 1 [setxy 6 4 set color white set home? FALSE]
+  loop-setup
+  ask patches [set restrictive-covenant 0]
+  ;patch-setup
+  ;turtle-setup
+  ;create-Ws 1 [setxy 6 4 set color white set home? FALSE]
 end
 
 to loop-setup
   clear-turtles
-  clear-patches
+  ;clear-patches
   reset-ticks
   patch-setup
   turtle-setup
@@ -51,10 +53,16 @@ to loop-model
   update-turtles
   move-homeless-turtles
   if count turtles with [home? = FALSE] = 0 or ticks = 50 [
-    output-raster
-    set loop-count loop-count + 1
-    if loop-count > 2 [stop]
-    loop-setup]
+    ask patches with [pcolor = red]
+      [set restrictive-covenant restrictive-covenant + 1]
+
+    if loop-count = num-loops [
+      output-raster
+      stop
+      ]
+    loop-setup
+    set loop-count loop-count + 1]
+
   ask Ws [ reproduce-Ws ]
   ask Bs [ reproduce-Bs ]
   tick
@@ -65,6 +73,8 @@ to patch-setup
   set DistToWater gis:load-dataset "DistToWater/disttowater.asc"
   gis:set-world-envelope (gis:envelope-of DistToWater)
   gis:apply-raster DistToWater waterDistance
+
+
 
   ; b/c the raster represents distance to water in 250m cell increments,
   ; any cell that has a value less than 250 must be water itself
@@ -122,13 +132,12 @@ to reproduce-Bs  ; black agent procedure
 end
 
 to output-raster
-  ask patches [set restrictive-covenant 0]
-  ask patches with [pcolor = red]
-    [set restrictive-covenant 1]
+
   ask patches  [
+    set restrictive-covenant restrictive-covenant / loop-count
     set export_raster gis:patch-dataset restrictive-covenant
   ]
-  gis:store-dataset export_raster word "ABM_Output" loop-count
+  gis:store-dataset export_raster "ABM_Output"
 end
 
 
@@ -329,10 +338,10 @@ count Ws with [home? = TRUE]
 11
 
 BUTTON
-56
-174
-160
-207
+736
+43
+840
+76
 NIL
 loop-model
 T
@@ -346,15 +355,26 @@ NIL
 1
 
 MONITOR
-766
-155
-849
-200
+736
+182
+819
+227
 NIL
 loop-count
 17
 1
 11
+
+INPUTBOX
+733
+98
+882
+158
+num-loops
+3.0
+1
+0
+Number
 
 @#$#@#$#@
 ## WHAT IS IT?

@@ -1,3 +1,4 @@
 *.tmp.*
 .DS_*
 ABM_Output*
+*.asc.aux.xml

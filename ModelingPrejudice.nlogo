@@ -11,6 +11,7 @@ globals [
   DistToWater
 
   export_raster ; output raster of patch color value
+  loop-count ; how many times the model has run
 ]
 
 patches-own [waterDistance
@@ -25,14 +26,39 @@ turtles-own [
 ]
 
 
+
+
 to setup
   clear-all
+  reset-ticks
+  set loop-count 1
+  patch-setup
+  turtle-setup
+  create-Ws 1 [setxy 6 4 set color white set home? FALSE]
+end
+
+to loop-setup
+  clear-turtles
+  clear-patches
   reset-ticks
   patch-setup
   turtle-setup
   create-Ws 1 [setxy 6 4 set color white set home? FALSE]
 end
 
+to loop-model
+
+  update-turtles
+  move-homeless-turtles
+  if count turtles with [home? = FALSE] = 0 or ticks = 50 [
+    output-raster
+    set loop-count loop-count + 1
+    if loop-count > 2 [stop]
+    loop-setup]
+  ask Ws [ reproduce-Ws ]
+  ask Bs [ reproduce-Bs ]
+  tick
+end
 
 ; use the raster data from Minneapolis to initialize patch values
 to patch-setup
@@ -102,7 +128,7 @@ to output-raster
   ask patches  [
     set export_raster gis:patch-dataset restrictive-covenant
   ]
-  gis:store-dataset export_raster "ABM_Output"
+  gis:store-dataset export_raster word "ABM_Output" loop-count
 end
 
 
@@ -298,6 +324,34 @@ MONITOR
 519
 NIL
 count Ws with [home? = TRUE]
+17
+1
+11
+
+BUTTON
+56
+174
+160
+207
+NIL
+loop-model
+T
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+MONITOR
+766
+155
+849
+200
+NIL
+loop-count
 17
 1
 11

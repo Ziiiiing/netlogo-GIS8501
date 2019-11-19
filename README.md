@@ -28,7 +28,7 @@ Download and install the [NetLogo](http://ccl.northwestern.edu/netlogo/) to run 
 - Click `setup` button to create both majority and minority turtles based on the actual ratio in 1910. 
 The inital location of turtles will be gathered around the central land of canvas and they will not pass or set home on water as well. 
 The ability of breeding increases the amount of turtles as tick goes up, and the birth rate also based on the actual pattern in the urban area.
-  - **💁‍♀️(picture of setup botton/gif of setup will go here)**
+  - **💁‍♀️(picture of setup button/gif of setup will go here)**
 
 - Click `go` button to see the dynamic changes of turtle movement and patch development. 
 The tick window showed on the model will represent the year.

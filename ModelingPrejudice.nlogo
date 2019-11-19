@@ -11,6 +11,7 @@ globals [
   DistToWater
 
   export_raster ; output raster of patch color value
+  loop-count ; how many times the model has run
 ]
 
 patches-own [waterDistance
@@ -25,20 +26,55 @@ turtles-own [
 ]
 
 
+
+
 to setup
   clear-all
+  ;reset-ticks
+  set loop-count 1
+  loop-setup
+  ask patches [set restrictive-covenant 0]
+  ;patch-setup
+  ;turtle-setup
+  ;create-Ws 1 [setxy 6 4 set color white set home? FALSE]
+end
+
+to loop-setup
+  clear-turtles
+  ;clear-patches
   reset-ticks
   patch-setup
   turtle-setup
   create-Ws 1 [setxy 6 4 set color white set home? FALSE]
 end
 
+to loop-model
+
+  update-turtles
+  move-homeless-turtles
+  if count turtles with [home? = FALSE] = 0 or ticks = 50 [
+    ask patches with [pcolor = red]
+      [set restrictive-covenant restrictive-covenant + 1]
+
+    if loop-count = num-loops [
+      output-raster
+      stop
+      ]
+    loop-setup
+    set loop-count loop-count + 1]
+
+  ask Ws [ reproduce-Ws ]
+  ask Bs [ reproduce-Bs ]
+  tick
+end
 
 ; use the raster data from Minneapolis to initialize patch values
 to patch-setup
   set DistToWater gis:load-dataset "DistToWater/disttowater.asc"
   gis:set-world-envelope (gis:envelope-of DistToWater)
   gis:apply-raster DistToWater waterDistance
+
+
 
   ; b/c the raster represents distance to water in 250m cell increments,
   ; any cell that has a value less than 250 must be water itself
@@ -96,10 +132,9 @@ to reproduce-Bs  ; black agent procedure
 end
 
 to output-raster
-  ask patches [set restrictive-covenant 0]
-  ask patches with [pcolor = red]
-    [set restrictive-covenant 1]
+
   ask patches  [
+    set restrictive-covenant restrictive-covenant / loop-count
     set export_raster gis:patch-dataset restrictive-covenant
   ]
   gis:store-dataset export_raster "ABM_Output"
@@ -301,6 +336,45 @@ count Ws with [home? = TRUE]
 17
 1
 11
+
+BUTTON
+736
+43
+840
+76
+NIL
+loop-model
+T
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+MONITOR
+736
+182
+819
+227
+NIL
+loop-count
+17
+1
+11
+
+INPUTBOX
+733
+98
+882
+158
+num-loops
+3.0
+1
+0
+Number
 
 @#$#@#$#@
 ## WHAT IS IT?

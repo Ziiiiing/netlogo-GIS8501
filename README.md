@@ -45,6 +45,6 @@ The tick window showed on the model will represent the year.
 
 
 ## Authors
-- Marguerite Mills
-- Travis Ormsby
-- Ziying Cheng
+- [Marguerite Mills](https://github.com/millsm278)
+- [Travis Ormsby](https://github.com/travisormsby)
+- [Ziying Cheng](https://github.com/Ziiiiing)

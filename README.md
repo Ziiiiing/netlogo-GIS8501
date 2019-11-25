@@ -1,46 +1,48 @@
 # Modeling Prejudice
-Our project aims to use [NetLogo](http://ccl.northwestern.edu/netlogo/) to create an agent based model(ABM) of racially restrictive covenants in the early 20th century in Minneapolis. 
-The model will replicate and predict the pattern and spread of covenants, as shown by the research of the Mapping Prejudice project(MP). 
-And the ABM strives to reaffirm and strengthen MP’s claim that covenants had a powerful segregative power on the urban landscape by replicating their emergence in a reproducible and extendable model. 
-We believe that through this model we can validate the robustness of MP’s research.
+(pic)
 
-## Included parameters
-Agent based modeling can produce sophisticated outputs of emergent behavior with simple inputs and few parameters. 
-Our model would include measures of:
+## WHAT IS IT?
+
+**Modeling Prejudice** is a project that aims to use [NetLogo](http://ccl.northwestern.edu/netlogo/) to create an agent based model **(ABM)** to replicate and predict the pattern and spread of covenants, as shown by the research of the **Mapping Prejudice project(MP)**.
+
+This project models the behavior of both white and black agents in the early 20th century in Minneapolis. The two agents get along with each other, but each agent wants to make sure that it lives near some of “its own”, which means each white agent wants to live near at least some white agents, and each black agent wants to live near at least some black agents.
+
+**The simulation  will include**
 - Demography
 - Rate of natural increase and immigration
-- Propagation rate 
+- Propagation rate
 - Distance to amenities
 
-## Get started
+## HOW TO USE IT
 
-### Installation
-Download and install the [NetLogo](http://ccl.northwestern.edu/netlogo/) to run the model. 
+Click the `SETUP` button to set up the agents. The initial ratio of white agents and black agents are based on the historic demographic patterns in 1910. The agents are set up randomly on the blue patches in central part of the area, and blue patches have no restrictions. No patch has more than one agent as well.
 
-### Clone
-- Clone this repo to your local machine using `https://github.com/Ziiiiing/netlogo-GIS8501.git`
-- Run the `ModelingPrejuce.nlogo` in NetLogo
+Click `GO` to start the simulation. Red patches are developed by white agents only and are defined as the patches with restrictive covenants, which means the black agents cannot set home on them. If agents don’t find an available place to set home, they will move 1 step towards a random direction.
 
-### Run 
-- Move the `cov_rate` slider to change the rate of covenants.
-  - **💁‍♀️(picture/gif of slider will go here)**
+The `cov_rate` slider controls the restrictive covenant density of the neighborhood. It takes effect only before every time you click GO.
 
-- Click `setup` button to create both majority and minority turtles based on the actual ratio in 1910. 
-The inital location of turtles will be gathered around the central land of canvas and they will not pass or set home on water as well. 
-The ability of breeding increases the amount of turtles as tick goes up, and the birth rate also based on the actual pattern in the urban area.
-  - **💁‍♀️(picture of setup button/gif of setup will go here)**
+The `num-loops` input controls the number of loops you want the model to run automatically. Input an integer and click `loop-model` button to start
 
-- Click `go` button to see the dynamic changes of turtle movement and patch development. 
-The tick window showed on the model will represent the year.
-  - **💁‍♀️(gif of dynamic changes and picture of tick window will go here)**
+## THINGS TO NOTICE
 
-- Once the model stops, the output will be exported as a raster file in your local machine called `ABM_Output.asc`. 
+The green patches refer to the land while the black patches represent the water area. Agents can only move and set home on green patches and need to avoid black patches while wandering. 
 
-- Add this raster file in ArcGIS Pro or ArcGIS Desktop ,and compare it with the actual raster result `rrc_density.asc`.
-  - **💁‍♀️(picture of output raster in Pro will go here)**
+The `population` of agents will increase based on an artificial inflated growth rate when the model start running.
+
+One `tick` in the model is defined as a year. The maximum tick is 50, which specifically describes the patterns from 1910 to 1960. 
+
+The model will stop when the tick arrives at 50. And `a raster file` will be created automatically in the local machine, which refers to the average result of the patterns of the red patches in the neighborhood after many times loops. You can add the raster file into the ArcGIS Pro to make it visualize.
 
 
 
+## NETLOGO FEATURE
+`Loop-model` is used to run the model automatically with the specific times. The output of red patches can be more representative and less insignificant when compared with the raster of MP.
+
+`Patch-setup` is used to specify the land and water, which is based on the geographic information in the neighborhood.
+
+When the homeless agent is wandering, `update-turtles` is designed to check the availability of setting home on the current patch.
+
+Authors
 
 
 

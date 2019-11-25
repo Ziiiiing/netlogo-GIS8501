@@ -42,9 +42,6 @@ The model will stop when the tick arrives at 50. And `a raster file` will be cre
 
 When the homeless agent is wandering, `update-turtles` is designed to check the availability of setting home on the current patch.
 
-Authors
-
-
 
 ## Authors
 - [Marguerite Mills](https://github.com/millsm278)

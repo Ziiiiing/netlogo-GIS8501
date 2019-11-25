@@ -21,7 +21,7 @@ Click `GO` to start the simulation. Red patches are developed by white agents on
 
 The `cov_rate` slider controls the restrictive covenant density of the neighborhood. It takes effect only before every time you click GO.
 
-The `num-loops` input controls the number of loops you want the model to run automatically. Input an integer and click `loop-model` button to start
+The `num-loops` input controls the number of loops you want the model to run automatically. Input an integer and click `loop-model` button to start running.
 
 ## THINGS TO NOTICE
 

@@ -6,15 +6,32 @@ breed [Ws W]
 
 
 globals [
+  ; random value generated for each patch, checks against the covenant propogation rate to see if a developed patch has a covenant or not.
   cov_score
+
   ; raster dataset of how far to amenities - only modeling non-Mississippi water bodies here
   DistToWater
 
+  ; raster dataset with developed parcels in 1910
+  devstart
+
   export_raster ; output raster of patch color value
   loop-count ; how many times the model has run
+
+  ; parcels at the start that are already developed
+  available-parcels
+
+  ; start and end values for each subgroup population
+  w-pop-start
+  b-pop-start
+
+  ; annual growth rates for each subgroup
+  w-pop-rate
+  b-pop-rate
 ]
 
 patches-own [waterDistance
+             deved-at-start
              covMultiplier
              restrictive-covenant] ; raster values applied to patches
 
@@ -32,11 +49,10 @@ to setup
   clear-all
   ;reset-ticks
   set loop-count 1
-  loop-setup
   ask patches [set restrictive-covenant 0]
-  ;patch-setup
-  ;turtle-setup
-  ;create-Ws 1 [setxy 6 4 set color white set home? FALSE]
+    ; count the number of patches that are developed at the start
+
+  loop-setup
 end
 
 to loop-setup
@@ -71,38 +87,42 @@ end
 ; use the raster data from Minneapolis to initialize patch values
 to patch-setup
   set DistToWater gis:load-dataset "DistToWater/disttowater.asc"
-  gis:set-world-envelope (gis:envelope-of DistToWater)
   gis:apply-raster DistToWater waterDistance
+
+  set devstart gis:load-dataset "parcels_1910/parcels_1910.asc"
+  gis:apply-raster devstart deved-at-start
+
+  gis:set-world-envelope (gis:envelope-union-of ;(gis:envelope-of: DistToWater)
+                                                (gis:envelope-of: devstart)
+  )
+
 
 
 
   ; b/c the raster represents distance to water in 250m cell increments,
   ; any cell that has a value less than 250 must be water itself
-  ask patches [ifelse waterDistance < 250
-    [set pcolor black]     ; water
-    [set pcolor green] ]   ; land
 
-  ; define area of initial development
-  ask patches with [
-    pxcor > 14 and
-    pxcor < 34 and
-    pycor > 20 and
-    pycor < 40
-  ]
+  ask patches [set pcolor green]
+  ask patches with [deved-at-start = 1] [set pcolor blue]
+  ask patches with [waterDistance < 250] [set pcolor black]
 
-
-  ; develop the initial area without restrictive covenants
-  [set pcolor blue]
-
+  set available-parcels count patches with [pcolor = blue]
+  print available-parcels
+  set b-pop-start available-parcels * percent-minority-start / 100
+  set w-pop-start available-parcels - b-pop-start
+  print b-pop-start
+  print w-pop-start
 end
 
 
 ; create turtles
 ; they are not allowed to overlap
 ; they are not allowed to be set in water
+
 to turtle-setup
-  ask n-of 352 patches with [pcolor = blue and not any? other turtles-here] [sprout-Ws 1 [set color white set home? FALSE]]
-  ask n-of 9 patches with [pcolor = blue and not any? other turtles-here] [sprout-Bs 1 [set color black set home? FALSE]]
+
+  ask n-of w-pop-start patches with [pcolor = blue and not any? other turtles-here] [sprout-Ws 1 [set color white set home? FALSE]]
+  ask n-of b-pop-start patches with [pcolor = blue and not any? other turtles-here] [sprout-Bs 1 [set color black set home? FALSE]]
 end
 
 
@@ -224,7 +244,6 @@ to create-covenant
   ]
 
 end
-
 
 
 @#$#@#$#@
@@ -372,6 +391,58 @@ INPUTBOX
 158
 num-loops
 3.0
+1
+0
+Number
+
+SLIDER
+837
+302
+1009
+335
+percent-minority-start
+percent-minority-start
+0
+100
+1.0
+1
+1
+NIL
+HORIZONTAL
+
+SLIDER
+821
+375
+993
+408
+percent-minority-end
+percent-minority-end
+0
+100
+2.0
+1
+1
+NIL
+HORIZONTAL
+
+INPUTBOX
+781
+461
+936
+521
+start-pop
+500.0
+1
+0
+Number
+
+INPUTBOX
+807
+545
+962
+605
+end-pop
+1000.0
 1
 0
 Number

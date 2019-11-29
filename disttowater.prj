@@ -1,6 +1,7 @@
-Projection    GEOGRAPHIC
+Projection    UTM
+Zone          15
 Datum         WGS84
 Spheroid      WGS84
-Units         DD
+Units         METERS
 Zunits        NO
 Parameters    

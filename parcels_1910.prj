@@ -1,7 +1,7 @@
 Projection    UTM
 Zone          15
-Datum         NAD83
-Spheroid      GRS80
+Datum         WGS84
+Spheroid      WGS84
 Units         METERS
 Zunits        NO
 Parameters    

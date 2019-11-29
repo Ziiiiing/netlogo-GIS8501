@@ -245,16 +245,15 @@ to create-covenant
 
 end
 
-
 @#$#@#$#@
 GRAPHICS-WINDOW
 210
 10
-708
-629
+546
+579
 -1
 -1
-10.0
+8.0
 1
 10
 1
@@ -265,9 +264,9 @@ GRAPHICS-WINDOW
 1
 1
 0
-48
+40
 0
-60
+69
 1
 1
 1
@@ -309,10 +308,10 @@ NIL
 1
 
 SLIDER
-60
-227
-232
-260
+21
+223
+193
+256
 cov_rate
 cov_rate
 0

@@ -149,6 +149,7 @@ to go
   update-turtles
   move-homeless-turtles
   if ticks = 50 [
+    set file-name "ABM_Output_Single_Sample"
     output-raster
     stop]
   ask Ws [ reproduce-Ws ]
@@ -157,13 +158,13 @@ to go
 end
 
 to reproduce-Ws  ; white agent procedure
-  if random 10000 < 183 [  ; throw "dice" to see if you will reproduce
+  if random 10000 < w-growth-rate * 100 [  ; throw "dice" to see if you will reproduce
     hatch 1 [ set home? False set move-speed w-move-speed rt random-float 360 fd move-speed ]   ; hatch an offspring and move it forward 1 step
   ]
 end
 
 to reproduce-Bs  ; black agent procedure
-  if random 10000 < 302 [  ; throw "dice" to see if you will reproduce
+  if random 10000 < b-growth-rate * 100 [  ; throw "dice" to see if you will reproduce
     hatch 1 [ set home? False set move-speed b-move-speed rt random-float 360 fd move-speed ]  ; hatch an offspring and move it forward 1 step
   ]
 end
@@ -221,7 +222,7 @@ end
 ; this represents the historical process of creating parcels together as a development
 to develop-parcel
   ; change from undeveloped to developed
-  ask turtles [ask patches in-radius dev-size [
+  ask turtles [ask patches in-radius (dev-size) [
     if pcolor = green [
       set pcolor grey
     ]
@@ -241,7 +242,7 @@ to create-covenant
 
   ask Ws [
     set cov_score random 100 * covMultiplier
-    ask patches in-radius dev-size [
+    ask patches in-radius (dev-size) [
       if pcolor = grey [
       ifelse cov_rate > cov_score
         [set pcolor red]
@@ -262,16 +263,16 @@ to create-covenant
 ;    ]
   ]
 
-  ask Bs [ask patches in-radius dev-size [if pcolor = grey [set pcolor blue]]
+  ask Bs [ask patches in-radius (dev-size) [if pcolor = grey [set pcolor blue]]
   ]
 
 end
 @#$#@#$#@
 GRAPHICS-WINDOW
-210
-10
-546
-579
+205
+21
+541
+590
 -1
 -1
 8.0
@@ -295,10 +296,10 @@ ticks
 30.0
 
 BUTTON
-79
-52
-149
-85
+15
+20
+100
+55
 NIL
 setup
 NIL
@@ -312,10 +313,10 @@ NIL
 1
 
 BUTTON
-72
-123
-135
-156
+105
+20
+190
+55
 NIL
 go
 T
@@ -329,10 +330,10 @@ NIL
 1
 
 SLIDER
-21
-223
-193
-256
+15
+130
+190
+163
 cov_rate
 cov_rate
 0
@@ -344,21 +345,10 @@ NIL
 HORIZONTAL
 
 MONITOR
-19
-277
-89
-322
-NIL
-count Ws
-17
-1
-11
-
-MONITOR
-99
-279
-165
-324
+562
+135
+628
+180
 NIL
 count Bs
 17
@@ -366,10 +356,10 @@ count Bs
 11
 
 MONITOR
-4
-342
-166
-387
+635
+68
+797
+113
 NIL
 count Ws with [home? = TRUE]
 17
@@ -377,10 +367,10 @@ count Ws with [home? = TRUE]
 11
 
 BUTTON
-736
-43
-840
-76
+15
+60
+100
+125
 NIL
 loop-model
 T
@@ -394,10 +384,10 @@ NIL
 1
 
 MONITOR
-736
-182
-819
-227
+722
+201
+805
+246
 NIL
 loop-count
 17
@@ -405,10 +395,10 @@ loop-count
 11
 
 INPUTBOX
-733
-98
-882
-158
+105
+60
+190
+125
 num-loops
 3.0
 1
@@ -416,10 +406,10 @@ num-loops
 Number
 
 SLIDER
-837
-302
-1009
-335
+15
+330
+190
+363
 percent-minority-start
 percent-minority-start
 0
@@ -430,26 +420,11 @@ percent-minority-start
 NIL
 HORIZONTAL
 
-SLIDER
-821
-375
-993
-408
-percent-minority-end
-percent-minority-end
-0
-100
-2.0
-1
-1
-NIL
-HORIZONTAL
-
 INPUTBOX
-781
-461
-936
-521
+15
+370
+190
+435
 start-pop
 500.0
 1
@@ -457,10 +432,10 @@ start-pop
 Number
 
 INPUTBOX
-807
-545
-962
-605
+15
+440
+190
+505
 end-pop
 1000.0
 1
@@ -468,40 +443,40 @@ end-pop
 Number
 
 SLIDER
-602
-249
-774
-282
+15
+170
+190
+203
 amenity-import
 amenity-import
 1
 100
-100.0
+99.0
 1
 1
 NIL
 HORIZONTAL
 
 SLIDER
-606
-334
-778
-367
+15
+250
+190
+283
 w-move-speed
 w-move-speed
 1
 10
-6.0
+10.0
 1
 1
 NIL
 HORIZONTAL
 
 SLIDER
-604
-395
-776
-428
+15
+290
+190
+323
 b-move-speed
 b-move-speed
 1
@@ -513,10 +488,10 @@ NIL
 HORIZONTAL
 
 MONITOR
-5
-398
-186
-443
+636
+135
+797
+180
 NIL
 count Bs with [home? = TRUE]
 17
@@ -524,19 +499,52 @@ count Bs with [home? = TRUE]
 11
 
 SLIDER
-561
-160
-733
-193
+15
+210
+190
+243
 dev-size
 dev-size
 0
 5
-5.0
+1.0
 1
 1
 NIL
 HORIZONTAL
+
+INPUTBOX
+105
+510
+190
+575
+w-growth-rate
+1.83
+1
+0
+Number
+
+INPUTBOX
+15
+510
+100
+575
+b-growth-rate
+3.02
+1
+0
+Number
+
+MONITOR
+562
+69
+632
+114
+NIL
+count Ws
+17
+1
+11
 
 @#$#@#$#@
 ## WHAT IS IT?

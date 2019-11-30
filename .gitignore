@@ -2,3 +2,5 @@
 .DS_*
 ABM_Output*
 *.asc.aux.xml
+residuals.asc
+.ipynb_checkpoints

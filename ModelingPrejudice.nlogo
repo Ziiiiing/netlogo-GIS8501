@@ -62,16 +62,16 @@ end
 to loop-setup
   clear-turtles
   ;clear-patches
-  reset-ticks
   patch-setup
   turtle-setup
-  create-Ws 1 [setxy 6 4 set color white set home? FALSE]
+  reset-ticks
+  clear-plot
 end
 
 to loop-model
-
-  update-turtles
   move-homeless-turtles
+  update-turtles
+
   if count turtles with [home? = FALSE] = 0 or ticks = 50 [
     ask patches with [pcolor = red]
       [set restrictive-covenant restrictive-covenant + 1]
@@ -118,6 +118,7 @@ to patch-setup
   ask patches with [waterDistance < 250] [set pcolor black]
 
   set available-parcels count patches with [pcolor = blue] * 0.75
+  ;set available-parcels 100
   set b-pop-start available-parcels * percent-minority-start / 100
   set w-pop-start available-parcels - b-pop-start
 
@@ -126,7 +127,7 @@ to patch-setup
     if 250 < waterDistance and waterDistance <= 500 [set covMultiplier 1 / amenity-import ^ (1 / 2)]
     if 500 < waterDistance and waterDistance <= 750 [set covMultiplier 1 / amenity-import ^ (1 / 3)]
     if 750 < waterDistance and waterDistance <= 1000 [set covMultiplier 1 / amenity-import ^ (1 / 4)]
-    if 1000 < waterDistance [set covMultiplier 1 / amenity-import ^ (1 / 5)]
+    if 1000 < waterDistance [set covMultiplier 1]
   ]
 
 end
@@ -184,7 +185,7 @@ end
 to move-homeless-turtles
   ask turtles with [home? = FALSE]
   [find-new-spot]
-   develop-parcel
+  develop-parcel
 end
 
 ; move until the homeless turtles find an unoccupied patch
@@ -198,15 +199,15 @@ end
 
 to update-turtles
   ask Ws [
-    set other-nearby-2 count (turtles in-radius 1) with [color != [color] of myself]
+    set other-nearby-2 count (turtles in-radius (2 ^ (1 / 2))) with [color != [color] of myself]
     if other-nearby-2 = 0 and not any? other turtles-here [
       if pcolor != black [
       set home? TRUE]
   ]]
 
-  ;ask Ws with [home? = TRUE] [
-  ;  if other-nearby-2 > 0 [set home? FALSE]  ; racist white turtles will move if a black turtle moves into the neighborhood
-  ;]
+  ask Ws with [home? = TRUE] [
+    if other-nearby-2 > 0 [set home? FALSE]  ; racist white turtles will move if a black turtle moves into the neighborhood
+  ]
 
    ask Bs [
     if not any? other turtles-here [
@@ -222,7 +223,7 @@ end
 ; this represents the historical process of creating parcels together as a development
 to develop-parcel
   ; change from undeveloped to developed
-  ask turtles [ask patches in-radius (dev-size) [
+  ask turtles with [pcolor = green] [ask patches in-radius (dev-size * 2 ^ ( 1 / 2)) [
     if pcolor = green [
       set pcolor grey
     ]
@@ -242,7 +243,7 @@ to create-covenant
 
   ask Ws [
     set cov_score random 100 * covMultiplier
-    ask patches in-radius (dev-size) [
+    ask patches in-radius (dev-size * 2 ^ ( 1 / 2)) [  ; multiply the dev-size by sqrt 2 in order to get queen's case radius
       if pcolor = grey [
       ifelse cov_rate > cov_score
         [set pcolor red]
@@ -263,7 +264,7 @@ to create-covenant
 ;    ]
   ]
 
-  ask Bs [ask patches in-radius (dev-size) [if pcolor = grey [set pcolor blue]]
+  ask Bs [ask patches in-radius (dev-size * 2 ^ ( 1 / 2)) [if pcolor = grey [set pcolor blue]]
   ]
 
 end
@@ -338,33 +339,11 @@ cov_rate
 cov_rate
 0
 100
-2.0
+5.0
 1
 1
 NIL
 HORIZONTAL
-
-MONITOR
-562
-135
-628
-180
-NIL
-count Bs
-17
-1
-11
-
-MONITOR
-635
-68
-797
-113
-NIL
-count Ws with [home? = TRUE]
-17
-1
-11
 
 BUTTON
 15
@@ -384,10 +363,10 @@ NIL
 1
 
 MONITOR
-722
-201
-805
-246
+554
+23
+637
+68
 NIL
 loop-count
 17
@@ -400,7 +379,7 @@ INPUTBOX
 190
 125
 num-loops
-3.0
+20.0
 1
 0
 Number
@@ -426,7 +405,7 @@ INPUTBOX
 190
 435
 start-pop
-500.0
+301408.0
 1
 0
 Number
@@ -437,7 +416,7 @@ INPUTBOX
 190
 505
 end-pop
-1000.0
+482872.0
 1
 0
 Number
@@ -451,7 +430,7 @@ amenity-import
 amenity-import
 1
 100
-99.0
+100.0
 1
 1
 NIL
@@ -466,7 +445,7 @@ w-move-speed
 w-move-speed
 1
 10
-10.0
+5.0
 1
 1
 NIL
@@ -487,17 +466,6 @@ b-move-speed
 NIL
 HORIZONTAL
 
-MONITOR
-636
-135
-797
-180
-NIL
-count Bs with [home? = TRUE]
-17
-1
-11
-
 SLIDER
 15
 210
@@ -507,7 +475,7 @@ dev-size
 dev-size
 0
 5
-1.0
+2.0
 1
 1
 NIL
@@ -535,16 +503,42 @@ b-growth-rate
 0
 Number
 
-MONITOR
-562
-69
-632
-114
-NIL
-count Ws
-17
-1
-11
+PLOT
+554
+84
+1003
+374
+Covenant Growth
+Time
+Covenants
+0.0
+50.0
+0.0
+2500.0
+false
+true
+"" ""
+PENS
+"Non-Restrictive" 1.0 0 -13345367 true "" "plot count patches with [pcolor = blue]"
+"Restrictive" 1.0 0 -2674135 true "" "plot count patches with [pcolor = red]"
+
+PLOT
+554
+388
+980
+538
+Population Growth
+Time
+Population
+0.0
+50.0
+0.0
+2500.0
+false
+true
+"" ""
+PENS
+"population" 1.0 0 -16777216 true "" "plot count turtles"
 
 @#$#@#$#@
 ## WHAT IS IT?

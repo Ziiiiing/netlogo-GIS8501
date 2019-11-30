@@ -28,6 +28,9 @@ globals [
   ; annual growth rates for each subgroup
   w-pop-rate
   b-pop-rate
+
+  ; file name for the output raster
+  file-name
 ]
 
 patches-own [waterDistance
@@ -40,6 +43,7 @@ patches-own [waterDistance
 turtles-own [
   home?                ; for each turtle, indicates whether turtles find a proper place to settle down
   other-nearby-2       ; how many two-patch away turtles with different color
+  move-speed           ; how far a turtle moves
 ]
 
 
@@ -73,9 +77,16 @@ to loop-model
       [set restrictive-covenant restrictive-covenant + 1]
 
     if loop-count = num-loops [
+      set file-name "ABM_Output_Mean"
       output-raster
       stop
       ]
+
+    if loop-count = 1 [
+      set file-name "ABM_Output_Single_Sample"
+      output-raster
+    ]
+
     loop-setup
     set loop-count loop-count + 1]
 
@@ -106,12 +117,18 @@ to patch-setup
   ask patches with [deved-at-start = 1] [set pcolor blue]
   ask patches with [waterDistance < 250] [set pcolor black]
 
-  set available-parcels count patches with [pcolor = blue]
-  print available-parcels
+  set available-parcels count patches with [pcolor = blue] * 0.75
   set b-pop-start available-parcels * percent-minority-start / 100
   set w-pop-start available-parcels - b-pop-start
-  print b-pop-start
-  print w-pop-start
+
+  ask patches [
+    if waterDistance <= 250 [set covMultiplier 1 / amenity-import]
+    if 250 < waterDistance and waterDistance <= 500 [set covMultiplier 1 / amenity-import ^ (1 / 2)]
+    if 500 < waterDistance and waterDistance <= 750 [set covMultiplier 1 / amenity-import ^ (1 / 3)]
+    if 750 < waterDistance and waterDistance <= 1000 [set covMultiplier 1 / amenity-import ^ (1 / 4)]
+    if 1000 < waterDistance [set covMultiplier 1 / amenity-import ^ (1 / 5)]
+  ]
+
 end
 
 
@@ -121,8 +138,8 @@ end
 
 to turtle-setup
 
-  ask n-of w-pop-start patches with [pcolor = blue and not any? other turtles-here] [sprout-Ws 1 [set color white set home? FALSE]]
-  ask n-of b-pop-start patches with [pcolor = blue and not any? other turtles-here] [sprout-Bs 1 [set color black set home? FALSE]]
+  ask n-of w-pop-start patches with [pcolor = blue and not any? other turtles-here] [sprout-Ws 1 [set color white set home? FALSE set move-speed w-move-speed]]
+  ask n-of b-pop-start patches with [pcolor = blue and not any? other turtles-here] [sprout-Bs 1 [set color black set home? FALSE set move-speed b-move-speed]]
 end
 
 
@@ -131,7 +148,7 @@ end
 to go
   update-turtles
   move-homeless-turtles
-  if count turtles with [home? = FALSE] = 0 or ticks = 50 [
+  if ticks = 50 [
     output-raster
     stop]
   ask Ws [ reproduce-Ws ]
@@ -141,13 +158,13 @@ end
 
 to reproduce-Ws  ; white agent procedure
   if random 10000 < 183 [  ; throw "dice" to see if you will reproduce
-    hatch 1 [ set home? False rt random-float 360 fd 6 ]   ; hatch an offspring and move it forward 1 step
+    hatch 1 [ set home? False set move-speed w-move-speed rt random-float 360 fd move-speed ]   ; hatch an offspring and move it forward 1 step
   ]
 end
 
 to reproduce-Bs  ; black agent procedure
   if random 10000 < 302 [  ; throw "dice" to see if you will reproduce
-    hatch 1 [ set home? False rt random-float 360 fd 6 ]  ; hatch an offspring and move it forward 1 step
+    hatch 1 [ set home? False set move-speed b-move-speed rt random-float 360 fd move-speed ]  ; hatch an offspring and move it forward 1 step
   ]
 end
 
@@ -157,7 +174,7 @@ to output-raster
     set restrictive-covenant restrictive-covenant / loop-count
     set export_raster gis:patch-dataset restrictive-covenant
   ]
-  gis:store-dataset export_raster "ABM_Output"
+  gis:store-dataset export_raster file-name
 end
 
 
@@ -172,7 +189,7 @@ end
 ; move until the homeless turtles find an unoccupied patch
 to find-new-spot
   rt random-float 360
-  fd 6
+  fd move-speed
   if any? other turtles-here [find-new-spot]        ; check whether the new places they found are unoccupied
   if pcolor = black [find-new-spot]
   move-to patch-here                            ; move to center of unoccupied patch
@@ -186,14 +203,15 @@ to update-turtles
       set home? TRUE]
   ]]
 
+  ;ask Ws with [home? = TRUE] [
+  ;  if other-nearby-2 > 0 [set home? FALSE]  ; racist white turtles will move if a black turtle moves into the neighborhood
+  ;]
+
    ask Bs [
-    ;set other-nearby-2 count (turtles in-radius 2) with [color != [color] of myself]
-    ;if other-nearby-2 = 0 and
     if not any? other turtles-here [
-      if pcolor != black [
-        if pcolor != red [                          ; besides, black turtles cannot set home on red patches
+      if pcolor != black  and pcolor != red [ ; besides, black turtles cannot set home on red patches
       set home? TRUE]
-  ]]]
+  ]]
 end
 
 
@@ -203,11 +221,11 @@ end
 ; this represents the historical process of creating parcels together as a development
 to develop-parcel
   ; change from undeveloped to developed
-  ask (patch-set [neighbors] of turtles [patch-here] of turtles) [
+  ask turtles [ask patches in-radius dev-size [
     if pcolor = green [
       set pcolor grey
     ]
-  ]
+  ]]
 
   create-covenant
 
@@ -220,31 +238,34 @@ end
 ; red patches have restrictive covenants
 ; blue patches have no restrictions
 to create-covenant
-  ask patches [carefully
-    [set covMultiplier (waterDistance / gis:maximum-of DistToWater)]
-    [set covMultiplier 0]
-  ]
+
   ask Ws [
-    set cov_score random 50 + random 50 * covMultiplier ; half the score is baked in, half is modified by the covMultiplier
-    if pcolor = grey [
-      ifelse cov_rate > cov_score
-        [set pcolor red]
-        [set pcolor blue]
-    ]
-    ask neighbors [if pcolor = grey [
+    set cov_score random 100 * covMultiplier
+    ask patches in-radius dev-size [
+      if pcolor = grey [
       ifelse cov_rate > cov_score
         [set pcolor red]
         [set pcolor blue]
       ]
     ]
+
+;    if pcolor = grey [
+;      ifelse cov_rate > cov_score
+;        [set pcolor red]
+;        [set pcolor blue]
+;    ]
+;    ask neighbors [if pcolor = grey [
+;      ifelse cov_rate > cov_score
+;        [set pcolor red]
+;        [set pcolor blue]
+;      ]
+;    ]
   ]
 
-  ask Bs [if pcolor = grey [set pcolor blue]
-    ask neighbors [if pcolor = grey [set pcolor blue]]
+  ask Bs [ask patches in-radius dev-size [if pcolor = grey [set pcolor blue]]
   ]
 
 end
-
 @#$#@#$#@
 GRAPHICS-WINDOW
 210
@@ -316,17 +337,17 @@ cov_rate
 cov_rate
 0
 100
-52.0
+2.0
 1
 1
 NIL
 HORIZONTAL
 
 MONITOR
-62
-306
-132
-351
+19
+277
+89
+322
 NIL
 count Ws
 17
@@ -334,10 +355,10 @@ count Ws
 11
 
 MONITOR
-80
-396
-146
-441
+99
+279
+165
+324
 NIL
 count Bs
 17
@@ -345,10 +366,10 @@ count Bs
 11
 
 MONITOR
-13
-474
-214
-519
+4
+342
+166
+387
 NIL
 count Ws with [home? = TRUE]
 17
@@ -445,6 +466,77 @@ end-pop
 1
 0
 Number
+
+SLIDER
+602
+249
+774
+282
+amenity-import
+amenity-import
+1
+100
+100.0
+1
+1
+NIL
+HORIZONTAL
+
+SLIDER
+606
+334
+778
+367
+w-move-speed
+w-move-speed
+1
+10
+6.0
+1
+1
+NIL
+HORIZONTAL
+
+SLIDER
+604
+395
+776
+428
+b-move-speed
+b-move-speed
+1
+10
+1.0
+1
+1
+NIL
+HORIZONTAL
+
+MONITOR
+5
+398
+186
+443
+NIL
+count Bs with [home? = TRUE]
+17
+1
+11
+
+SLIDER
+561
+160
+733
+193
+dev-size
+dev-size
+0
+5
+5.0
+1
+1
+NIL
+HORIZONTAL
 
 @#$#@#$#@
 ## WHAT IS IT?

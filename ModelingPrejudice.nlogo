@@ -6,15 +6,35 @@ breed [Ws W]
 
 
 globals [
+  ; random value generated for each patch, checks against the covenant propogation rate to see if a developed patch has a covenant or not.
   cov_score
+
   ; raster dataset of how far to amenities - only modeling non-Mississippi water bodies here
   DistToWater
 
+  ; raster dataset with developed parcels in 1910
+  devstart
+
   export_raster ; output raster of patch color value
   loop-count ; how many times the model has run
+
+  ; parcels at the start that are already developed
+  available-parcels
+
+  ; start and end values for each subgroup population
+  w-pop-start
+  b-pop-start
+
+  ; annual growth rates for each subgroup
+  w-pop-rate
+  b-pop-rate
+
+  ; file name for the output raster
+  file-name
 ]
 
 patches-own [waterDistance
+             deved-at-start
              covMultiplier
              restrictive-covenant] ; raster values applied to patches
 
@@ -23,6 +43,7 @@ patches-own [waterDistance
 turtles-own [
   home?                ; for each turtle, indicates whether turtles find a proper place to settle down
   other-nearby-2       ; how many two-patch away turtles with different color
+  move-speed           ; how far a turtle moves
 ]
 
 
@@ -32,34 +53,40 @@ to setup
   clear-all
   ;reset-ticks
   set loop-count 1
-  loop-setup
   ask patches [set restrictive-covenant 0]
-  ;patch-setup
-  ;turtle-setup
-  ;create-Ws 1 [setxy 6 4 set color white set home? FALSE]
+    ; count the number of patches that are developed at the start
+
+  loop-setup
 end
 
 to loop-setup
   clear-turtles
   ;clear-patches
-  reset-ticks
   patch-setup
   turtle-setup
-  create-Ws 1 [setxy 6 4 set color white set home? FALSE]
+  reset-ticks
+  clear-plot
 end
 
 to loop-model
-
-  update-turtles
   move-homeless-turtles
+  update-turtles
+
   if count turtles with [home? = FALSE] = 0 or ticks = 50 [
     ask patches with [pcolor = red]
       [set restrictive-covenant restrictive-covenant + 1]
 
     if loop-count = num-loops [
+      set file-name "ABM_Output_Mean"
       output-raster
       stop
       ]
+
+    if loop-count = 1 [
+      set file-name "ABM_Output_Single_Sample"
+      output-raster
+    ]
+
     loop-setup
     set loop-count loop-count + 1]
 
@@ -71,28 +98,37 @@ end
 ; use the raster data from Minneapolis to initialize patch values
 to patch-setup
   set DistToWater gis:load-dataset "DistToWater/disttowater.asc"
-  gis:set-world-envelope (gis:envelope-of DistToWater)
   gis:apply-raster DistToWater waterDistance
+
+  set devstart gis:load-dataset "parcels_1910/parcels_1910.asc"
+  gis:apply-raster devstart deved-at-start
+
+  gis:set-world-envelope (gis:envelope-union-of ;(gis:envelope-of: DistToWater)
+                                                (gis:envelope-of: devstart)
+  )
+
 
 
 
   ; b/c the raster represents distance to water in 250m cell increments,
   ; any cell that has a value less than 250 must be water itself
-  ask patches [ifelse waterDistance < 250
-    [set pcolor black]     ; water
-    [set pcolor green] ]   ; land
 
-  ; define area of initial development
-  ask patches with [
-    pxcor > 14 and
-    pxcor < 34 and
-    pycor > 20 and
-    pycor < 40
+  ask patches [set pcolor green]
+  ask patches with [deved-at-start = 1] [set pcolor blue]
+  ask patches with [waterDistance < 250] [set pcolor black]
+
+  set available-parcels count patches with [pcolor = blue] * 0.75
+  ;set available-parcels 100
+  set b-pop-start available-parcels * percent-minority-start / 100
+  set w-pop-start available-parcels - b-pop-start
+
+  ask patches [
+    if waterDistance <= 250 [set covMultiplier 1 / amenity-import]
+    if 250 < waterDistance and waterDistance <= 500 [set covMultiplier 1 / amenity-import ^ (1 / 2)]
+    if 500 < waterDistance and waterDistance <= 750 [set covMultiplier 1 / amenity-import ^ (1 / 3)]
+    if 750 < waterDistance and waterDistance <= 1000 [set covMultiplier 1 / amenity-import ^ (1 / 4)]
+    if 1000 < waterDistance [set covMultiplier 1]
   ]
-
-
-  ; develop the initial area without restrictive covenants
-  [set pcolor blue]
 
 end
 
@@ -100,9 +136,11 @@ end
 ; create turtles
 ; they are not allowed to overlap
 ; they are not allowed to be set in water
+
 to turtle-setup
-  ask n-of 352 patches with [pcolor = blue and not any? other turtles-here] [sprout-Ws 1 [set color white set home? FALSE]]
-  ask n-of 9 patches with [pcolor = blue and not any? other turtles-here] [sprout-Bs 1 [set color black set home? FALSE]]
+
+  ask n-of w-pop-start patches with [pcolor = blue and not any? other turtles-here] [sprout-Ws 1 [set color white set home? FALSE set move-speed w-move-speed]]
+  ask n-of b-pop-start patches with [pcolor = blue and not any? other turtles-here] [sprout-Bs 1 [set color black set home? FALSE set move-speed b-move-speed]]
 end
 
 
@@ -111,7 +149,8 @@ end
 to go
   update-turtles
   move-homeless-turtles
-  if count turtles with [home? = FALSE] = 0 or ticks = 50 [
+  if ticks = 50 [
+    set file-name "ABM_Output_Single_Sample"
     output-raster
     stop]
   ask Ws [ reproduce-Ws ]
@@ -120,14 +159,14 @@ to go
 end
 
 to reproduce-Ws  ; white agent procedure
-  if random 10000 < 183 [  ; throw "dice" to see if you will reproduce
-    hatch 1 [ set home? False rt random-float 360 fd 6 ]   ; hatch an offspring and move it forward 1 step
+  if random 10000 < w-growth-rate * 100 [  ; throw "dice" to see if you will reproduce
+    hatch 1 [ set home? False set move-speed w-move-speed rt random-float 360 fd move-speed ]   ; hatch an offspring and move it forward 1 step
   ]
 end
 
 to reproduce-Bs  ; black agent procedure
-  if random 10000 < 302 [  ; throw "dice" to see if you will reproduce
-    hatch 1 [ set home? False rt random-float 360 fd 6 ]  ; hatch an offspring and move it forward 1 step
+  if random 10000 < b-growth-rate * 100 [  ; throw "dice" to see if you will reproduce
+    hatch 1 [ set home? False set move-speed b-move-speed rt random-float 360 fd move-speed ]  ; hatch an offspring and move it forward 1 step
   ]
 end
 
@@ -137,7 +176,7 @@ to output-raster
     set restrictive-covenant restrictive-covenant / loop-count
     set export_raster gis:patch-dataset restrictive-covenant
   ]
-  gis:store-dataset export_raster "ABM_Output"
+  gis:store-dataset export_raster file-name
 end
 
 
@@ -146,13 +185,13 @@ end
 to move-homeless-turtles
   ask turtles with [home? = FALSE]
   [find-new-spot]
-   develop-parcel
+  develop-parcel
 end
 
 ; move until the homeless turtles find an unoccupied patch
 to find-new-spot
   rt random-float 360
-  fd 6
+  fd move-speed
   if any? other turtles-here [find-new-spot]        ; check whether the new places they found are unoccupied
   if pcolor = black [find-new-spot]
   move-to patch-here                            ; move to center of unoccupied patch
@@ -160,20 +199,21 @@ end
 
 to update-turtles
   ask Ws [
-    set other-nearby-2 count (turtles in-radius 1) with [color != [color] of myself]
+    set other-nearby-2 count (turtles in-radius (2 ^ (1 / 2))) with [color != [color] of myself]
     if other-nearby-2 = 0 and not any? other turtles-here [
       if pcolor != black [
       set home? TRUE]
   ]]
 
+  ask Ws with [home? = TRUE] [
+    if other-nearby-2 > 0 [set home? FALSE]  ; racist white turtles will move if a black turtle moves into the neighborhood
+  ]
+
    ask Bs [
-    ;set other-nearby-2 count (turtles in-radius 2) with [color != [color] of myself]
-    ;if other-nearby-2 = 0 and
     if not any? other turtles-here [
-      if pcolor != black [
-        if pcolor != red [                          ; besides, black turtles cannot set home on red patches
+      if pcolor != black  and pcolor != red [ ; besides, black turtles cannot set home on red patches
       set home? TRUE]
-  ]]]
+  ]]
 end
 
 
@@ -183,11 +223,11 @@ end
 ; this represents the historical process of creating parcels together as a development
 to develop-parcel
   ; change from undeveloped to developed
-  ask (patch-set [neighbors] of turtles [patch-here] of turtles) [
+  ask turtles with [pcolor = green] [ask patches in-radius (dev-size * 2 ^ ( 1 / 2)) [
     if pcolor = green [
       set pcolor grey
     ]
-  ]
+  ]]
 
   create-covenant
 
@@ -200,42 +240,43 @@ end
 ; red patches have restrictive covenants
 ; blue patches have no restrictions
 to create-covenant
-  ask patches [carefully
-    [set covMultiplier (waterDistance / gis:maximum-of DistToWater)]
-    [set covMultiplier 0]
-  ]
+
   ask Ws [
-    set cov_score random 50 + random 50 * covMultiplier ; half the score is baked in, half is modified by the covMultiplier
-    if pcolor = grey [
-      ifelse cov_rate > cov_score
-        [set pcolor red]
-        [set pcolor blue]
-    ]
-    ask neighbors [if pcolor = grey [
+    set cov_score random 100 * covMultiplier
+    ask patches in-radius (dev-size * 2 ^ ( 1 / 2)) [  ; multiply the dev-size by sqrt 2 in order to get queen's case radius
+      if pcolor = grey [
       ifelse cov_rate > cov_score
         [set pcolor red]
         [set pcolor blue]
       ]
     ]
+
+;    if pcolor = grey [
+;      ifelse cov_rate > cov_score
+;        [set pcolor red]
+;        [set pcolor blue]
+;    ]
+;    ask neighbors [if pcolor = grey [
+;      ifelse cov_rate > cov_score
+;        [set pcolor red]
+;        [set pcolor blue]
+;      ]
+;    ]
   ]
 
-  ask Bs [if pcolor = grey [set pcolor blue]
-    ask neighbors [if pcolor = grey [set pcolor blue]]
+  ask Bs [ask patches in-radius (dev-size * 2 ^ ( 1 / 2)) [if pcolor = grey [set pcolor blue]]
   ]
 
 end
-
-
-
 @#$#@#$#@
 GRAPHICS-WINDOW
-210
-10
-708
-629
+205
+21
+541
+590
 -1
 -1
-10.0
+8.0
 1
 10
 1
@@ -246,9 +287,9 @@ GRAPHICS-WINDOW
 1
 1
 0
-48
+40
 0
-60
+69
 1
 1
 1
@@ -256,10 +297,10 @@ ticks
 30.0
 
 BUTTON
-79
-52
-149
-85
+15
+20
+100
+55
 NIL
 setup
 NIL
@@ -273,10 +314,10 @@ NIL
 1
 
 BUTTON
-72
-123
-135
-156
+105
+20
+190
+55
 NIL
 go
 T
@@ -290,58 +331,25 @@ NIL
 1
 
 SLIDER
-60
-227
-232
-260
+15
+130
+190
+163
 cov_rate
 cov_rate
 0
 100
-52.0
+5.0
 1
 1
 NIL
 HORIZONTAL
 
-MONITOR
-62
-306
-132
-351
-NIL
-count Ws
-17
-1
-11
-
-MONITOR
-80
-396
-146
-441
-NIL
-count Bs
-17
-1
-11
-
-MONITOR
-13
-474
-214
-519
-NIL
-count Ws with [home? = TRUE]
-17
-1
-11
-
 BUTTON
-736
-43
-840
-76
+15
+60
+100
+125
 NIL
 loop-model
 T
@@ -355,10 +363,10 @@ NIL
 1
 
 MONITOR
-736
-182
-819
-227
+554
+23
+637
+68
 NIL
 loop-count
 17
@@ -366,15 +374,171 @@ loop-count
 11
 
 INPUTBOX
-733
-98
-882
-158
+105
+60
+190
+125
 num-loops
-3.0
+20.0
 1
 0
 Number
+
+SLIDER
+15
+330
+190
+363
+percent-minority-start
+percent-minority-start
+0
+100
+1.0
+1
+1
+NIL
+HORIZONTAL
+
+INPUTBOX
+15
+370
+190
+435
+start-pop
+301408.0
+1
+0
+Number
+
+INPUTBOX
+15
+440
+190
+505
+end-pop
+482872.0
+1
+0
+Number
+
+SLIDER
+15
+170
+190
+203
+amenity-import
+amenity-import
+1
+100
+100.0
+1
+1
+NIL
+HORIZONTAL
+
+SLIDER
+15
+250
+190
+283
+w-move-speed
+w-move-speed
+1
+10
+5.0
+1
+1
+NIL
+HORIZONTAL
+
+SLIDER
+15
+290
+190
+323
+b-move-speed
+b-move-speed
+1
+10
+1.0
+1
+1
+NIL
+HORIZONTAL
+
+SLIDER
+15
+210
+190
+243
+dev-size
+dev-size
+0
+5
+2.0
+1
+1
+NIL
+HORIZONTAL
+
+INPUTBOX
+105
+510
+190
+575
+w-growth-rate
+1.83
+1
+0
+Number
+
+INPUTBOX
+15
+510
+100
+575
+b-growth-rate
+3.02
+1
+0
+Number
+
+PLOT
+554
+84
+1003
+374
+Covenant Growth
+Time
+Covenants
+0.0
+50.0
+0.0
+2500.0
+false
+true
+"" ""
+PENS
+"Non-Restrictive" 1.0 0 -13345367 true "" "plot count patches with [pcolor = blue]"
+"Restrictive" 1.0 0 -2674135 true "" "plot count patches with [pcolor = red]"
+
+PLOT
+554
+388
+980
+538
+Population Growth
+Time
+Population
+0.0
+50.0
+0.0
+2500.0
+false
+true
+"" ""
+PENS
+"population" 1.0 0 -16777216 true "" "plot count turtles"
 
 @#$#@#$#@
 ## WHAT IS IT?

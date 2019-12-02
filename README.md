@@ -1,5 +1,5 @@
 # Modeling Prejudice
-(pic)
+
 
 ## WHAT IS IT?
 
@@ -9,9 +9,9 @@ This project models the behavior of both white and black agents in the early 20t
 
 **The simulation  will include**
 - Demography
-- Rate of natural increase and immigration
-- Propagation rate
-- Distance to amenities
+- Population growth
+- Probability of restrictive covenant
+- Distance to desirable waterside property
 
 ## HOW TO USE IT
 
